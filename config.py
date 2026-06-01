@@ -1,0 +1,4 @@
+DATABASE_PATH = "data/recommender.db"
+MODEL_PATH = "data/model.pkl"
+COLD_START_THRESHOLD = 3
+DEFAULT_N_RECOMMENDATIONS = 10

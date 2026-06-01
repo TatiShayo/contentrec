@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+lightfm
+numpy
+scipy
+pydantic
+pytest
+httpx
