@@ -1,0 +1,38 @@
+# Virtual environment
+venv/
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+
+# Git
+.git/
+.gitignore
+
+# Test caches
+.pytest_cache/
+
+# Runtime data (rebuilt at startup)
+data/*.db
+data/*.pkl
+data/*.index
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docs / notes (not needed in container)
+*.md
+ENGINE_PLAN.md
+PROMPT_SESSION.md
+PROMPT_SESSION_SYNTHESIS.md
+research_report_phase0.md
+synthesized_research_phase0.md
+
+# Docker files (avoid recursive context)
+Dockerfile
+docker-compose.yml
+.dockerignore

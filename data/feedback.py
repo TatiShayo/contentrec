@@ -2,15 +2,15 @@ import sqlite3
 from datetime import datetime
 from data.database import get_db_connection
 
-def add_feedback(user_id, item_id, event_type, timestamp=None):
+def add_feedback(user_id, item_id, event_type, timestamp=None, dwell_time=0.0):
     if timestamp is None:
         timestamp = datetime.now().isoformat()
     
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute(
-            "INSERT INTO feedback (user_id, item_id, event_type, timestamp) VALUES (?, ?, ?, ?)",
-            (user_id, item_id, event_type, timestamp)
+            "INSERT INTO feedback (user_id, item_id, event_type, timestamp, dwell_time) VALUES (?, ?, ?, ?, ?)",
+            (user_id, item_id, event_type, timestamp, dwell_time)
         )
         conn.commit()
         return cursor.lastrowid

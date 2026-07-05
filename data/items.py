@@ -54,9 +54,22 @@ def search_by_tags(query):
         items = []
         for row in rows:
             item = dict(row)
-            if item['metadata_json']:
-                item['metadata'] = json.loads(item['metadata_json'])
-            else:
-                item['metadata'] = None
+            item['metadata'] = json.loads(item['metadata_json']) if item['metadata_json'] else None
             items.append(item)
         return items
+
+def get_items_by_ids(item_ids):
+    if not item_ids:
+        return {}
+    placeholders = ",".join("?" for _ in item_ids)
+    with get_db_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT * FROM items WHERE item_id IN ({placeholders})", list(item_ids))
+        rows = cursor.fetchall()
+        result = {}
+        for row in rows:
+            item = dict(row)
+            item['metadata'] = json.loads(item['metadata_json']) if item['metadata_json'] else None
+            result[item['item_id']] = item
+        return result
+

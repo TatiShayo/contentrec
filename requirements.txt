@@ -6,3 +6,6 @@ scipy
 pydantic
 pytest
 httpx
+sentence-transformers
+faiss-cpu
+torch

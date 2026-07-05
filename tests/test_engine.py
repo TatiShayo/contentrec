@@ -40,7 +40,7 @@ def test_cold_start(clean_db):
     assert recs[0]["item_id"] == "item1"
 
 def test_similar_items(clean_db):
-    from models.engine import LIGHTFM_AVAILABLE
+    from models.engine import LIGHTFM_AVAILABLE, FAISS_AVAILABLE
     add_item("item1", "T1", "a,b")
     add_item("item2", "T2", "a,b")
     add_item("item3", "T3", "x,y")
@@ -51,7 +51,8 @@ def test_similar_items(clean_db):
     engine.train()
     
     similar = engine.similar_items("item1", n=2)
-    if LIGHTFM_AVAILABLE:
+    if LIGHTFM_AVAILABLE or FAISS_AVAILABLE:
         assert len(similar) > 0
     else:
         assert len(similar) == 0
+

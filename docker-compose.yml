@@ -1,0 +1,28 @@
+# ============================================================================
+# Content Recommendation Engine - Docker Compose
+# ============================================================================
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: contentrec
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist SQLite database and trained model files across restarts
+      - ./data:/app/data
+    environment:
+      # Override config values via environment variables if needed
+      - DATABASE_PATH=data/recommender.db
+      - MODEL_PATH=data/model.pkl
+      - COLD_START_THRESHOLD=3
+      - DEFAULT_N_RECOMMENDATIONS=10
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    restart: unless-stopped

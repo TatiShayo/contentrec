@@ -1,0 +1,870 @@
+{
+  "summary": {
+    "total": 85,
+    "passed": 85,
+    "failed": 0,
+    "skipped": 0,
+    "duration_seconds": 0.0
+  },
+  "tests": [
+    {
+      "nodeid": "tests.test_api.test_health",
+      "name": "test_health",
+      "classname": "tests.test_api",
+      "status": "passed",
+      "duration": 7.637,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_api.test_items_api",
+      "name": "test_items_api",
+      "classname": "tests.test_api",
+      "status": "passed",
+      "duration": 0.332,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_api.test_feedback_api",
+      "name": "test_feedback_api",
+      "classname": "tests.test_api",
+      "status": "passed",
+      "duration": 0.312,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_api.test_recommend_api",
+      "name": "test_recommend_api",
+      "classname": "tests.test_api",
+      "status": "passed",
+      "duration": 0.384,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_api.test_stats_api",
+      "name": "test_stats_api",
+      "classname": "tests.test_api",
+      "status": "passed",
+      "duration": 0.451,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_data.test_items_crud",
+      "name": "test_items_crud",
+      "classname": "tests.test_data",
+      "status": "passed",
+      "duration": 0.169,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_data.test_search_by_tags",
+      "name": "test_search_by_tags",
+      "classname": "tests.test_data",
+      "status": "passed",
+      "duration": 0.168,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_data.test_feedback",
+      "name": "test_feedback",
+      "classname": "tests.test_data",
+      "status": "passed",
+      "duration": 0.198,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_data.test_empty_db",
+      "name": "test_empty_db",
+      "classname": "tests.test_data",
+      "status": "passed",
+      "duration": 0.129,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestTextEmbedder.test_singleton",
+      "name": "test_singleton",
+      "classname": "tests.test_embeddings.TestTextEmbedder",
+      "status": "passed",
+      "duration": 0.115,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestTextEmbedder.test_encode_shape",
+      "name": "test_encode_shape",
+      "classname": "tests.test_embeddings.TestTextEmbedder",
+      "status": "passed",
+      "duration": 0.132,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestTextEmbedder.test_encode_batch_shape",
+      "name": "test_encode_batch_shape",
+      "classname": "tests.test_embeddings.TestTextEmbedder",
+      "status": "passed",
+      "duration": 0.133,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestTextEmbedder.test_encode_batch_empty",
+      "name": "test_encode_batch_empty",
+      "classname": "tests.test_embeddings.TestTextEmbedder",
+      "status": "passed",
+      "duration": 0.118,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestTextEmbedder.test_embed_item",
+      "name": "test_embed_item",
+      "classname": "tests.test_embeddings.TestTextEmbedder",
+      "status": "passed",
+      "duration": 0.167,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestTextEmbedder.test_embed_item_missing_fields",
+      "name": "test_embed_item_missing_fields",
+      "classname": "tests.test_embeddings.TestTextEmbedder",
+      "status": "passed",
+      "duration": 0.134,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestTextEmbedder.test_thread_safety",
+      "name": "test_thread_safety",
+      "classname": "tests.test_embeddings.TestTextEmbedder",
+      "status": "passed",
+      "duration": 0.513,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestFAISSIndex.test_build_index",
+      "name": "test_build_index",
+      "classname": "tests.test_embeddings.TestFAISSIndex",
+      "status": "passed",
+      "duration": 0.134,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestFAISSIndex.test_build_index_empty",
+      "name": "test_build_index_empty",
+      "classname": "tests.test_embeddings.TestFAISSIndex",
+      "status": "passed",
+      "duration": 0.142,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestFAISSIndex.test_search_returns_results",
+      "name": "test_search_returns_results",
+      "classname": "tests.test_embeddings.TestFAISSIndex",
+      "status": "passed",
+      "duration": 0.139,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestFAISSIndex.test_search_n_capped",
+      "name": "test_search_n_capped",
+      "classname": "tests.test_embeddings.TestFAISSIndex",
+      "status": "passed",
+      "duration": 0.135,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestFAISSIndex.test_search_empty_index",
+      "name": "test_search_empty_index",
+      "classname": "tests.test_embeddings.TestFAISSIndex",
+      "status": "passed",
+      "duration": 0.133,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestFAISSIndex.test_search_by_text",
+      "name": "test_search_by_text",
+      "classname": "tests.test_embeddings.TestFAISSIndex",
+      "status": "passed",
+      "duration": 0.155,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestFAISSIndex.test_add_item",
+      "name": "test_add_item",
+      "classname": "tests.test_embeddings.TestFAISSIndex",
+      "status": "passed",
+      "duration": 0.13,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestFAISSIndex.test_save_and_load",
+      "name": "test_save_and_load",
+      "classname": "tests.test_embeddings.TestFAISSIndex",
+      "status": "passed",
+      "duration": 0.232,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestFAISSIndex.test_thread_safety",
+      "name": "test_thread_safety",
+      "classname": "tests.test_embeddings.TestFAISSIndex",
+      "status": "passed",
+      "duration": 0.164,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestSearchAPI.test_post_search",
+      "name": "test_post_search",
+      "classname": "tests.test_embeddings.TestSearchAPI",
+      "status": "passed",
+      "duration": 0.338,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestSearchAPI.test_post_search_default_n",
+      "name": "test_post_search_default_n",
+      "classname": "tests.test_embeddings.TestSearchAPI",
+      "status": "passed",
+      "duration": 0.142,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestSearchAPI.test_get_search",
+      "name": "test_get_search",
+      "classname": "tests.test_embeddings.TestSearchAPI",
+      "status": "passed",
+      "duration": 0.142,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestSearchAPI.test_get_search_missing_query",
+      "name": "test_get_search_missing_query",
+      "classname": "tests.test_embeddings.TestSearchAPI",
+      "status": "passed",
+      "duration": 0.123,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_embeddings.TestSearchAPI.test_post_search_empty_query",
+      "name": "test_post_search_empty_query",
+      "classname": "tests.test_embeddings.TestSearchAPI",
+      "status": "passed",
+      "duration": 0.141,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_engine.test_engine_init",
+      "name": "test_engine_init",
+      "classname": "tests.test_engine",
+      "status": "passed",
+      "duration": 0.277,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_engine.test_train_and_recommend",
+      "name": "test_train_and_recommend",
+      "classname": "tests.test_engine",
+      "status": "passed",
+      "duration": 2.513,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_engine.test_cold_start",
+      "name": "test_cold_start",
+      "classname": "tests.test_engine",
+      "status": "passed",
+      "duration": 0.568,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_engine.test_similar_items",
+      "name": "test_similar_items",
+      "classname": "tests.test_engine",
+      "status": "passed",
+      "duration": 0.734,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_integration.test_full_pipeline",
+      "name": "test_full_pipeline",
+      "classname": "tests.test_integration",
+      "status": "passed",
+      "duration": 2.089,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestBuildUserSequences.test_basic_grouping",
+      "name": "test_basic_grouping",
+      "classname": "tests.test_sequential.TestBuildUserSequences",
+      "status": "passed",
+      "duration": 0.101,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestBuildUserSequences.test_max_seq_len_truncation",
+      "name": "test_max_seq_len_truncation",
+      "classname": "tests.test_sequential.TestBuildUserSequences",
+      "status": "passed",
+      "duration": 0.132,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestBuildUserSequences.test_empty_feedback",
+      "name": "test_empty_feedback",
+      "classname": "tests.test_sequential.TestBuildUserSequences",
+      "status": "passed",
+      "duration": 0.121,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestBuildItemIdMapping.test_mapping_with_dicts",
+      "name": "test_mapping_with_dicts",
+      "classname": "tests.test_sequential.TestBuildItemIdMapping",
+      "status": "passed",
+      "duration": 0.129,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestBuildItemIdMapping.test_mapping_with_strings",
+      "name": "test_mapping_with_strings",
+      "classname": "tests.test_sequential.TestBuildItemIdMapping",
+      "status": "passed",
+      "duration": 0.118,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestBuildItemIdMapping.test_zero_reserved_for_padding",
+      "name": "test_zero_reserved_for_padding",
+      "classname": "tests.test_sequential.TestBuildItemIdMapping",
+      "status": "passed",
+      "duration": 0.129,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestGetUserSequence.test_user_with_feedback",
+      "name": "test_user_with_feedback",
+      "classname": "tests.test_sequential.TestGetUserSequence",
+      "status": "passed",
+      "duration": 0.217,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestGetUserSequence.test_user_without_feedback",
+      "name": "test_user_without_feedback",
+      "classname": "tests.test_sequential.TestGetUserSequence",
+      "status": "passed",
+      "duration": 0.127,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestSASRecModel.test_forward_shape",
+      "name": "test_forward_shape",
+      "classname": "tests.test_sequential.TestSASRecModel",
+      "status": "passed",
+      "duration": 0.153,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestSASRecModel.test_forward_batch",
+      "name": "test_forward_batch",
+      "classname": "tests.test_sequential.TestSASRecModel",
+      "status": "passed",
+      "duration": 0.25,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestSASRecModel.test_predict_next_returns_list",
+      "name": "test_predict_next_returns_list",
+      "classname": "tests.test_sequential.TestSASRecModel",
+      "status": "passed",
+      "duration": 0.141,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestSASRecModel.test_predict_next_excludes_padding",
+      "name": "test_predict_next_excludes_padding",
+      "classname": "tests.test_sequential.TestSASRecModel",
+      "status": "passed",
+      "duration": 0.131,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestSASRecModel.test_predict_next_excludes_history",
+      "name": "test_predict_next_excludes_history",
+      "classname": "tests.test_sequential.TestSASRecModel",
+      "status": "passed",
+      "duration": 0.135,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestSASRecModel.test_predict_next_empty_sequence",
+      "name": "test_predict_next_empty_sequence",
+      "classname": "tests.test_sequential.TestSASRecModel",
+      "status": "passed",
+      "duration": 0.185,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestSASRecModel.test_causal_mask_shape",
+      "name": "test_causal_mask_shape",
+      "classname": "tests.test_sequential.TestSASRecModel",
+      "status": "passed",
+      "duration": 0.224,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestSequentialTrainer.test_prepare_training_data",
+      "name": "test_prepare_training_data",
+      "classname": "tests.test_sequential.TestSequentialTrainer",
+      "status": "passed",
+      "duration": 0.141,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestSequentialTrainer.test_prepare_training_data_empty",
+      "name": "test_prepare_training_data_empty",
+      "classname": "tests.test_sequential.TestSequentialTrainer",
+      "status": "passed",
+      "duration": 0.138,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestSequentialTrainer.test_train_returns_losses",
+      "name": "test_train_returns_losses",
+      "classname": "tests.test_sequential.TestSequentialTrainer",
+      "status": "passed",
+      "duration": 0.2,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestSequentialTrainer.test_loss_decreases",
+      "name": "test_loss_decreases",
+      "classname": "tests.test_sequential.TestSequentialTrainer",
+      "status": "passed",
+      "duration": 0.381,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestSequentialTrainer.test_save_and_load_model",
+      "name": "test_save_and_load_model",
+      "classname": "tests.test_sequential.TestSequentialTrainer",
+      "status": "passed",
+      "duration": 0.282,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestSequentialAPI.test_sequential_no_model",
+      "name": "test_sequential_no_model",
+      "classname": "tests.test_sequential.TestSequentialAPI",
+      "status": "passed",
+      "duration": 0.167,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestSequentialAPI.test_sequential_no_history",
+      "name": "test_sequential_no_history",
+      "classname": "tests.test_sequential.TestSequentialAPI",
+      "status": "passed",
+      "duration": 0.178,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_sequential.TestSequentialAPI.test_sequential_with_trained_model",
+      "name": "test_sequential_with_trained_model",
+      "classname": "tests.test_sequential.TestSequentialAPI",
+      "status": "passed",
+      "duration": 0.797,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades.test_cache_ttl_and_invalidation",
+      "name": "test_cache_ttl_and_invalidation",
+      "classname": "tests.test_upgrades",
+      "status": "passed",
+      "duration": 1.234,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades.test_metrics_tracker",
+      "name": "test_metrics_tracker",
+      "classname": "tests.test_upgrades",
+      "status": "passed",
+      "duration": 0.146,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades.test_mmr_diversity",
+      "name": "test_mmr_diversity",
+      "classname": "tests.test_upgrades",
+      "status": "passed",
+      "duration": 0.134,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades.test_metrics_endpoint",
+      "name": "test_metrics_endpoint",
+      "classname": "tests.test_upgrades",
+      "status": "passed",
+      "duration": 0.963,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades.test_rate_limiting",
+      "name": "test_rate_limiting",
+      "classname": "tests.test_upgrades",
+      "status": "passed",
+      "duration": 0.131,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades.test_ab_test_manager",
+      "name": "test_ab_test_manager",
+      "classname": "tests.test_upgrades",
+      "status": "passed",
+      "duration": 0.129,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades.test_recommend_ab_routing",
+      "name": "test_recommend_ab_routing",
+      "classname": "tests.test_upgrades",
+      "status": "passed",
+      "duration": 0.647,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades.test_recommendation_filtering",
+      "name": "test_recommendation_filtering",
+      "classname": "tests.test_upgrades",
+      "status": "passed",
+      "duration": 1.23,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades.test_conversion_tracking_and_ctr",
+      "name": "test_conversion_tracking_and_ctr",
+      "classname": "tests.test_upgrades",
+      "status": "passed",
+      "duration": 1.132,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades.test_automatic_retraining_trigger",
+      "name": "test_automatic_retraining_trigger",
+      "classname": "tests.test_upgrades",
+      "status": "passed",
+      "duration": 2.096,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades.test_contextual_recommendations",
+      "name": "test_contextual_recommendations",
+      "classname": "tests.test_upgrades",
+      "status": "passed",
+      "duration": 2.121,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades.test_category_fatigue_and_freshness",
+      "name": "test_category_fatigue_and_freshness",
+      "classname": "tests.test_upgrades",
+      "status": "passed",
+      "duration": 0.956,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades.test_latency_sla_telemetry",
+      "name": "test_latency_sla_telemetry",
+      "classname": "tests.test_upgrades",
+      "status": "passed",
+      "duration": 0.432,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades.test_lightgcn_embeddings",
+      "name": "test_lightgcn_embeddings",
+      "classname": "tests.test_upgrades",
+      "status": "passed",
+      "duration": 0.143,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades.test_neural_bandit_sampling",
+      "name": "test_neural_bandit_sampling",
+      "classname": "tests.test_upgrades",
+      "status": "passed",
+      "duration": 0.181,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades.test_hnsw_incremental_updates",
+      "name": "test_hnsw_incremental_updates",
+      "classname": "tests.test_upgrades",
+      "status": "passed",
+      "duration": 0.133,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades.test_multi_task_dwell_time",
+      "name": "test_multi_task_dwell_time",
+      "classname": "tests.test_upgrades",
+      "status": "passed",
+      "duration": 0.166,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades.test_fairness_pid_controller",
+      "name": "test_fairness_pid_controller",
+      "classname": "tests.test_upgrades",
+      "status": "passed",
+      "duration": 0.134,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades.test_shapley_explanations",
+      "name": "test_shapley_explanations",
+      "classname": "tests.test_upgrades",
+      "status": "passed",
+      "duration": 0.123,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades.test_bcq_reinforcement_learning",
+      "name": "test_bcq_reinforcement_learning",
+      "classname": "tests.test_upgrades",
+      "status": "passed",
+      "duration": 0.115,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades_v2.test_causal_propensity_estimator",
+      "name": "test_causal_propensity_estimator",
+      "classname": "tests.test_upgrades_v2",
+      "status": "passed",
+      "duration": 0.231,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades_v2.test_dpp_onboarding_quiz_and_submit",
+      "name": "test_dpp_onboarding_quiz_and_submit",
+      "classname": "tests.test_upgrades_v2",
+      "status": "passed",
+      "duration": 1.082,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades_v2.test_query_intent_parsing_negations",
+      "name": "test_query_intent_parsing_negations",
+      "classname": "tests.test_upgrades_v2",
+      "status": "passed",
+      "duration": 1.486,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades_v2.test_online_sequential_sgd",
+      "name": "test_online_sequential_sgd",
+      "classname": "tests.test_upgrades_v2",
+      "status": "passed",
+      "duration": 0.176,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades_v2.test_late_fusion_clip_faiss",
+      "name": "test_late_fusion_clip_faiss",
+      "classname": "tests.test_upgrades_v2",
+      "status": "passed",
+      "duration": 0.166,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades_v2.test_best_rec_autoencoder_pretraining",
+      "name": "test_best_rec_autoencoder_pretraining",
+      "classname": "tests.test_upgrades_v2",
+      "status": "passed",
+      "duration": 0.352,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    },
+    {
+      "nodeid": "tests.test_upgrades_v2.test_dirichlet_pid_surprise",
+      "name": "test_dirichlet_pid_surprise",
+      "classname": "tests.test_upgrades_v2",
+      "status": "passed",
+      "duration": 0.147,
+      "failure_message": "",
+      "flaky": false,
+      "rerun_attempts": 0
+    }
+  ],
+  "coverage_notes": {
+    "new_code_paths_checked": [
+      "api/feedback.py: online sequential sample adding & feedback counter retraining threshold triggers",
+      "api/items.py: incremental FAISS index update during POST /items",
+      "api/recommend.py: MMR diversity, context routing, steerable search queries, cache integration",
+      "models/engine.py: BEST-Rec, LightGCN, causal propensity, surprise controller, bandit auto-tuning integrations"
+    ],
+    "missing_tests": []
+  }
+}
