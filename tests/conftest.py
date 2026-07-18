@@ -8,19 +8,31 @@ import numpy as np
 _MOCK_DIM = 384
 mock_st_model = MagicMock()
 
-def _seed_for(text: str) -> int:
-    """Deterministic per-text seed so distinct inputs get distinct vectors.
-
-    The previous mock seeded every call with a constant (42), so every item
-    embedded to the *same* vector — which silently broke diversity-dependent
-    logic (e.g. the DPP onboarding selector collapsed to a single item).
-    """
-    return abs(hash(text)) % (2**32)
+import hashlib
+import re
 
 
 def _encode_one(text: str, normalize_embeddings: bool) -> np.ndarray:
-    rng = np.random.RandomState(_seed_for(text))
-    vec = rng.randn(_MOCK_DIM).astype(np.float32)
+    """Deterministic feature-hashing embedding.
+
+    The previous mock seeded every call with a constant (42), so *every* text
+    embedded to the same vector — which silently broke any logic that depends on
+    distinct/related embeddings (the DPP onboarding selector collapsed to one
+    item). A per-text random seed fixes distinctness but is non-deterministic
+    across processes (PYTHONHASHSEED) and carries no notion of similarity.
+
+    This feature-hashing scheme is (a) fully deterministic via hashlib and
+    (b) semantically meaningful: texts that share tokens get similar vectors,
+    so a query embedding is nearest the items that share its words. That keeps
+    both cold-start ranking tests and diversity tests honest.
+    """
+    vec = np.zeros(_MOCK_DIM, dtype=np.float32)
+    tokens = re.findall(r"[a-z0-9]+", (text or "").lower())
+    if not tokens:
+        vec[0] = 1.0  # stable non-zero vector for empty text
+    for tok in tokens:
+        h = int(hashlib.md5(tok.encode()).hexdigest(), 16)
+        vec[h % _MOCK_DIM] += 1.0
     if normalize_embeddings:
         vec /= np.linalg.norm(vec) + 1e-10
     return vec
@@ -47,6 +59,25 @@ import os
 import tempfile
 import config
 from data.database import init_db
+
+
+@pytest.fixture(autouse=True)
+def _deterministic_seeds():
+    """Seed every RNG so model training/ranking is reproducible across runs.
+
+    The torch models (SASRec/LightGCN/BCQ/BEST-Rec) are randomly initialized and
+    trained inside `/train`; without seeding, their scores perturb the final
+    ranking non-deterministically and make ordering-sensitive tests flaky.
+    """
+    import random
+    random.seed(1234)
+    np.random.seed(1234)
+    try:
+        import torch
+        torch.manual_seed(1234)
+    except Exception:
+        pass
+    yield
 
 
 @pytest.fixture(autouse=True)
