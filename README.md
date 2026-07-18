@@ -284,7 +284,8 @@ curl -X POST http://localhost:8000/train
 
 ## Configuration
 
-Configuration lives in `config.py`:
+`config.py` reads every setting from environment variables (with safe defaults),
+so secrets and deployment specifics never need to be hard-coded:
 
 | Variable                     | Default                | Description                                    |
 |------------------------------|------------------------|------------------------------------------------|
@@ -292,6 +293,26 @@ Configuration lives in `config.py`:
 | `MODEL_PATH`                 | `data/model.pkl`       | Path to save/load the trained model            |
 | `COLD_START_THRESHOLD`       | `3`                    | Min feedback events before collaborative recs  |
 | `DEFAULT_N_RECOMMENDATIONS`  | `10`                   | Default number of recommendations returned     |
+| `MAX_N_RECOMMENDATIONS`      | `100`                  | Hard cap on `n` per request (DoS guard)        |
+| `MAX_PAGE_LIMIT`             | `500`                  | Hard cap on list-endpoint pagination           |
+| `API_KEY`                    | *(unset)*              | If set, all non-public endpoints require `X-API-Key` |
+| `CORS_ALLOW_ORIGINS`         | *(empty)*              | Comma-separated allowed origins (wildcard disables credentials) |
+
+## Security
+
+- **Authentication** is opt-in: set `API_KEY` to require an `X-API-Key` header on
+  every write/recommend endpoint (`/health`, `/docs`, `/openapi.json` stay
+  public). Unset by default for frictionless local use. Note there is still no
+  *per-user* identity — `user_id` is caller-supplied (see `REVIEW_FINDINGS.md`).
+- **CORS** never combines a wildcard origin with credentials.
+- **Rate limiting** is per client IP (sliding window, proxy-header aware).
+- **Input validation**: all request bodies reject unknown fields and enforce
+  length/range bounds; `n` and pagination are capped.
+- Unhandled errors return a generic `500` — no stack traces are leaked.
+- Run `python -m pip_audit` to check dependency advisories.
+
+See `ARCHITECTURE.md`, `REVIEW_FINDINGS.md`, and `AUDIT_LOG.md` for the full
+security posture.
 
 ---
 
