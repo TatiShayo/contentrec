@@ -41,10 +41,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         # Bypass rate limits for health checks, metrics, and testing
         import config
-        if request.url.path in ["/health", "/metrics"] or getattr(config, "TESTING", False):
+        if request.url.path in ["/health", "/metrics", "/stats"] or getattr(config, "TESTING", False):
             return await call_next(request)
             
-        client_ip = request.client.host if request.client else "unknown"
+        client_ip = (
+            request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+            or request.headers.get("x-real-ip", "")
+            or (request.client.host if request.client else "unknown")
+        )
         if not self.limiter.is_allowed(client_ip):
             return JSONResponse(
                 status_code=429,

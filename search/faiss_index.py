@@ -239,15 +239,25 @@ class FAISSIndex:
                 ``data/faiss.index``.
         """
         index_path = path or DEFAULT_INDEX_PATH
-        map_path = os.path.splitext(index_path)[0] + "_map.pkl"
+        json_map_path = os.path.splitext(index_path)[0] + "_map.json"
+        # Backward compatibility: try old pickle format first, then JSON
+        pkl_map_path = os.path.splitext(index_path)[0] + "_map.pkl"
 
         with self._lock:
             self.index = faiss.read_index(index_path)
-            with open(map_path, "rb") as f:
-                mapping = pickle.load(f)
-                self._id_to_row = mapping["id_to_row"]
-                self._row_to_id = mapping["row_to_id"]
-                if self._id_to_row:
-                    self._next_id = max(self._id_to_row.values()) + 1
-                else:
-                    self._next_id = 0
+            if os.path.exists(json_map_path):
+                with open(json_map_path, "r") as f:
+                    mapping = json.load(f)
+            elif os.path.exists(pkl_map_path):
+                import warnings
+                warnings.warn(f"Loading legacy pickle map: {pkl_map_path}. Will be saved as JSON on next save().", DeprecationWarning)
+                with open(pkl_map_path, "rb") as f:
+                    mapping = pickle.load(f)  # nosec — legacy only, new saves use JSON
+            else:
+                raise FileNotFoundError(f"No map file found at {json_map_path} or {pkl_map_path}")
+            self._id_to_row = mapping["id_to_row"]
+            self._row_to_id = mapping["row_to_id"]
+            if self._id_to_row:
+                self._next_id = max(self._id_to_row.values()) + 1
+            else:
+                self._next_id = 0

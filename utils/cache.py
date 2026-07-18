@@ -6,8 +6,9 @@ from typing import Any, Dict, Optional, Tuple
 class RecommendationCache:
     """Thread-safe In-Memory TTL Cache for recommendations and search."""
 
-    def __init__(self, default_ttl: int = 300):
+    def __init__(self, default_ttl: int = 300, maxsize: int = 10000):
         self.default_ttl = default_ttl
+        self.maxsize = maxsize
         self._cache: Dict[str, Tuple[Any, float]] = {}
         self._lock = threading.Lock()
 
@@ -27,6 +28,9 @@ class RecommendationCache:
         ttl_val = ttl if ttl is not None else self.default_ttl
         expiry = time.time() + ttl_val
         with self._lock:
+            if len(self._cache) >= self.maxsize:
+                oldest_key = next(iter(self._cache))
+                del self._cache[oldest_key]
             self._cache[key] = (value, expiry)
 
     def invalidate_user(self, user_id: str) -> None:
@@ -47,7 +51,6 @@ class RecommendationCache:
     def size(self) -> int:
         """Return the current number of cached items."""
         with self._lock:
-            # Clean expired items first
             now = time.time()
             expired = [k for k, (_, exp) in self._cache.items() if now > exp]
             for k in expired:
