@@ -8,6 +8,7 @@ item-id ↔ row mapping are persisted to disk for fast restarts.
 """
 
 import os
+import json
 import pickle
 import threading
 from typing import Dict, List, Optional
@@ -216,20 +217,30 @@ class FAISSIndex:
                 ``data/faiss.index``.
         """
         index_path = path or DEFAULT_INDEX_PATH
-        map_path = os.path.splitext(index_path)[0] + "_map.pkl"
+        json_map_path = os.path.splitext(index_path)[0] + "_map.json"
+        legacy_pkl_path = os.path.splitext(index_path)[0] + "_map.pkl"
 
         os.makedirs(os.path.dirname(index_path) or ".", exist_ok=True)
 
         with self._lock:
             faiss.write_index(self.index, index_path)
-            with open(map_path, "wb") as f:
-                pickle.dump(
+            # Persist the id mapping as JSON (safe to deserialize) rather than
+            # pickle, which allows arbitrary code execution on load. JSON keys
+            # must be strings, so row_to_id integer keys are stringified.
+            with open(json_map_path, "w") as f:
+                json.dump(
                     {
                         "id_to_row": self._id_to_row,
-                        "row_to_id": self._row_to_id,
+                        "row_to_id": {str(k): v for k, v in self._row_to_id.items()},
                     },
                     f,
                 )
+            # Remove any stale legacy pickle so loads prefer the JSON map.
+            if os.path.exists(legacy_pkl_path):
+                try:
+                    os.remove(legacy_pkl_path)
+                except OSError:
+                    pass
 
     def load(self, path: Optional[str] = None) -> None:
         """Load a previously saved FAISS index and mapping from disk.
@@ -256,7 +267,8 @@ class FAISSIndex:
             else:
                 raise FileNotFoundError(f"No map file found at {json_map_path} or {pkl_map_path}")
             self._id_to_row = mapping["id_to_row"]
-            self._row_to_id = mapping["row_to_id"]
+            # Normalize row_to_id integer keys (JSON serializes them as strings).
+            self._row_to_id = {int(k): v for k, v in mapping["row_to_id"].items()}
             if self._id_to_row:
                 self._next_id = max(self._id_to_row.values()) + 1
             else:

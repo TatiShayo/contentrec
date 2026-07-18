@@ -8,17 +8,30 @@ import numpy as np
 _MOCK_DIM = 384
 mock_st_model = MagicMock()
 
-def _mock_encode(text_or_texts, normalize_embeddings=True, show_progress_bar=False):
-    rng = np.random.RandomState(42)
-    if isinstance(text_or_texts, str):
-        vec = rng.randn(_MOCK_DIM).astype(np.float32)
-        if normalize_embeddings:
-            vec /= np.linalg.norm(vec) + 1e-10
-        return vec
-    vecs = rng.randn(len(text_or_texts), _MOCK_DIM).astype(np.float32)
+def _seed_for(text: str) -> int:
+    """Deterministic per-text seed so distinct inputs get distinct vectors.
+
+    The previous mock seeded every call with a constant (42), so every item
+    embedded to the *same* vector — which silently broke diversity-dependent
+    logic (e.g. the DPP onboarding selector collapsed to a single item).
+    """
+    return abs(hash(text)) % (2**32)
+
+
+def _encode_one(text: str, normalize_embeddings: bool) -> np.ndarray:
+    rng = np.random.RandomState(_seed_for(text))
+    vec = rng.randn(_MOCK_DIM).astype(np.float32)
     if normalize_embeddings:
-        norms = np.linalg.norm(vecs, axis=1, keepdims=True) + 1e-10
-        vecs /= norms
+        vec /= np.linalg.norm(vec) + 1e-10
+    return vec
+
+
+def _mock_encode(text_or_texts, normalize_embeddings=True, show_progress_bar=False):
+    if isinstance(text_or_texts, str):
+        return _encode_one(text_or_texts, normalize_embeddings)
+    vecs = np.stack(
+        [_encode_one(t, normalize_embeddings) for t in text_or_texts]
+    ).astype(np.float32)
     return vecs
 
 mock_st_model.encode = _mock_encode

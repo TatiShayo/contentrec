@@ -62,6 +62,11 @@ def _patch_sentence_transformers():
         # Force-inject the mock model so lazy loading is bypassed
         embedder._model = _make_mock_model()
         yield
+        # Reset the singleton on teardown so this module's constant-seed mock
+        # does not leak into later test modules (it previously poisoned the
+        # DPP diversity test with identical embeddings for every item).
+        with TextEmbedder._instance_lock:
+            TextEmbedder._instance = None
 
 
 # ===================================================================

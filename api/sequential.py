@@ -3,6 +3,7 @@ from fastapi import APIRouter, Request, Query
 from typing import Optional
 from starlette.concurrency import run_in_threadpool
 import time
+import config
 
 router = APIRouter(tags=["sequential"])
 
@@ -122,7 +123,7 @@ def _get_sequential_recs(request, user_id, n, exclude_categories=None, exclude_i
 async def get_sequential_recommendations(
     user_id: str, 
     request: Request, 
-    n: int = Query(10, description="Number of recommendations to return"),
+    n: int = Query(10, ge=1, le=config.MAX_N_RECOMMENDATIONS, description="Number of recommendations to return"),
     exclude_categories: Optional[str] = Query(None, description="Comma-separated categories to exclude from recommendations", json_schema_extra={"example": "music"}),
     exclude_items: Optional[str] = Query(None, description="Comma-separated item IDs to exclude from recommendations", json_schema_extra={"example": "item_1"}),
     device: Optional[str] = Query(None, description="Client device type context", json_schema_extra={"example": "mobile"}),

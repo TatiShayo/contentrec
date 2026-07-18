@@ -1,14 +1,17 @@
-from fastapi import APIRouter, Request, HTTPException
+from fastapi import APIRouter, Request, HTTPException, Query
 from pydantic import BaseModel, Field
 from starlette.concurrency import run_in_threadpool
 import time
 from typing import Optional
+import config
 
 router = APIRouter(tags=["search"])
 
 class SearchRequest(BaseModel):
-    query: str = Field(..., description="Semantic text query to search for", json_schema_extra={"example": "machine learning"})
-    n: int = Field(10, description="Number of results to return", json_schema_extra={"example": 5})
+    model_config = {"extra": "forbid"}
+
+    query: str = Field(..., max_length=1024, description="Semantic text query to search for", json_schema_extra={"example": "machine learning"})
+    n: int = Field(10, ge=1, le=config.MAX_N_RECOMMENDATIONS, description="Number of results to return", json_schema_extra={"example": 5})
 
 @router.post("/search")
 async def search_post(req: SearchRequest, request: Request):
@@ -50,7 +53,11 @@ async def search_post(req: SearchRequest, request: Request):
     }
 
 @router.get("/search")
-async def search_get(request: Request, q: str, n: int = 10):
+async def search_get(
+    request: Request,
+    q: str = Query(..., max_length=1024),
+    n: int = Query(10, ge=1, le=config.MAX_N_RECOMMENDATIONS),
+):
     """Semantic search via query params."""
     engine = getattr(request.app.state, 'engine', None)
     faiss_index = getattr(request.app.state, 'faiss_index', None)

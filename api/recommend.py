@@ -10,7 +10,7 @@ router = APIRouter()
 async def get_recommendations(
     user_id: str, 
     request: Request, 
-    n: int = Query(config.DEFAULT_N_RECOMMENDATIONS, description="Number of recommendations to return"), 
+    n: int = Query(config.DEFAULT_N_RECOMMENDATIONS, ge=1, le=config.MAX_N_RECOMMENDATIONS, description="Number of recommendations to return"),
     features: Optional[str] = Query(None, description="Cold-start context feature tags/categories to match"),
     diversity: float = Query(0.8, ge=0.0, le=1.0, description="MMR diversity parameter (0.0 for max diversity, 1.0 for max relevance)"),
     exclude_categories: Optional[str] = Query(None, description="Comma-separated categories to exclude from recommendations", json_schema_extra={"example": "music,articles"}),
@@ -70,9 +70,9 @@ async def get_recommendations(
 
 @router.get("/similar/{item_id}")
 async def get_similar(
-    item_id: str, 
-    request: Request, 
-    n: int = Query(5, description="Number of similar items to return"),
+    item_id: str,
+    request: Request,
+    n: int = Query(5, ge=1, le=config.MAX_N_RECOMMENDATIONS, description="Number of similar items to return"),
     exclude_categories: Optional[str] = Query(None, description="Comma-separated categories to exclude from similar items", json_schema_extra={"example": "music"}),
     exclude_items: Optional[str] = Query(None, description="Comma-separated item IDs to exclude from similar items", json_schema_extra={"example": "item_5"})
 ):

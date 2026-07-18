@@ -87,17 +87,17 @@ def test_fuzzing_malformed_inputs(clean_db):
         })
         assert r.status_code == 400  # explicit guard
 
-        # Extremely long strings - should not crash
+        # Extremely long strings - now rejected by max_length (was: accepted)
         r = client.post("/feedback", json={
             "user_id": "A" * 100000, "item_id": "test", "event_type": "view",
         })
-        assert r.status_code != 500
+        assert r.status_code == 422  # HARDENED: max_length caps user_id
 
-        # Empty strings pass validation
+        # Empty strings now rejected by min_length (was: accepted as junk)
         r = client.post("/feedback", json={
             "user_id": "", "item_id": "", "event_type": "view",
         })
-        assert r.status_code == 200  # empty strings are valid strs
+        assert r.status_code == 422  # HARDENED: min_length=1
 
         # SQL metacharacters - parameterized queries prevent injection
         r = client.post("/feedback", json={
@@ -108,8 +108,8 @@ def test_fuzzing_malformed_inputs(clean_db):
         assert r.status_code == 200
 
 
-def test_mass_assignment_silently_accepted(clean_db):
-    """Extra fields not rejected - Pydantic ignores them by default."""
+def test_mass_assignment_rejected(clean_db):
+    """HARDENED: extra fields now rejected via model_config extra='forbid'."""
     with TestClient(app) as client:
         r = client.post("/feedback", json={
             "user_id": "attacker",
@@ -120,15 +120,19 @@ def test_mass_assignment_silently_accepted(clean_db):
             "role": "superuser",
             "internal_credit": 999999,
         })
-        assert r.status_code == 200
+        assert r.status_code == 422
 
 
 def test_unbounded_limits(clean_db):
-    """No caps on items, feedback, or users."""
+    """HARDENED: pagination + n now capped; feedback still unlimited (needs auth/quota)."""
     with TestClient(app) as client:
-        # Items: no pagination cap
+        # Items: pagination now capped (was: 99999999 accepted)
         r = client.get("/items?limit=99999999")
-        assert r.status_code == 200
+        assert r.status_code == 422  # HARDENED: le=MAX_PAGE_LIMIT
+
+        # Recommend: unbounded n was a candidate-blowup DoS; now capped
+        r = client.get("/recommend/dos_user?n=99999999")
+        assert r.status_code == 422  # HARDENED: le=MAX_N_RECOMMENDATIONS
 
         # Feedback: can create unlimited for unlimited fake users
         for i in range(30):

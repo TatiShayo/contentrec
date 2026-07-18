@@ -1,17 +1,27 @@
 from fastapi import APIRouter, Query, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 from starlette.concurrency import run_in_threadpool
 from data.items import add_item, get_item, get_all_items
+import config
 
 router = APIRouter()
 
 class ItemCreate(BaseModel):
-    item_id: str = Field(..., description="Unique item identifier", json_schema_extra={"example": "item_42"})
-    title: str = Field(..., description="Title of the item", json_schema_extra={"example": "Introduction to Machine Learning"})
-    tags: Optional[str] = Field("", description="Comma-separated keyword tags", json_schema_extra={"example": "ai,python,tutorial"})
-    category: Optional[str] = Field("", description="Primary category of the item", json_schema_extra={"example": "articles"})
+    model_config = {"extra": "forbid"}
+
+    item_id: str = Field(..., min_length=1, max_length=256, description="Unique item identifier", json_schema_extra={"example": "item_42"})
+    title: str = Field(..., min_length=1, max_length=1024, description="Title of the item", json_schema_extra={"example": "Introduction to Machine Learning"})
+    tags: Optional[str] = Field("", max_length=2048, description="Comma-separated keyword tags", json_schema_extra={"example": "ai,python,tutorial"})
+    category: Optional[str] = Field("", max_length=128, description="Primary category of the item", json_schema_extra={"example": "articles"})
     metadata: Optional[dict] = Field(None, description="Optional custom metadata key-value dictionary", json_schema_extra={"example": {"author": "John Doe", "published_year": 2026}})
+
+    @field_validator("metadata")
+    @classmethod
+    def _limit_metadata_size(cls, v):
+        if v is not None and len(v) > 100:
+            raise ValueError("metadata may not contain more than 100 keys")
+        return v
 
 @router.post("/items")
 async def post_item(item: ItemCreate, request: Request):
@@ -46,6 +56,9 @@ async def read_item(item_id: str):
     return item
 
 @router.get("/items")
-async def read_items(offset: int = 0, limit: int = 100):
+async def read_items(
+    offset: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=config.MAX_PAGE_LIMIT),
+):
     items = await run_in_threadpool(get_all_items)
     return items[offset : offset + limit]

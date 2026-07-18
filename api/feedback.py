@@ -8,11 +8,13 @@ import config
 router = APIRouter()
 
 class FeedbackCreate(BaseModel):
-    user_id: str = Field(..., description="Unique user identifier", json_schema_extra={"example": "user_alice"})
-    item_id: str = Field(..., description="Unique item identifier", json_schema_extra={"example": "item_12"})
-    event_type: str = Field(..., description="Type of interaction event (view, like, purchase, watch, click)", json_schema_extra={"example": "click"})
-    timestamp: Optional[str] = Field(None, description="ISO-8601 formatted timestamp", json_schema_extra={"example": "2026-06-11T23:22:34"})
-    dwell_time: Optional[float] = Field(0.0, description="Time in seconds spent viewing/interacting with the item", json_schema_extra={"example": 15.4})
+    model_config = {"extra": "forbid"}
+
+    user_id: str = Field(..., min_length=1, max_length=256, description="Unique user identifier", json_schema_extra={"example": "user_alice"})
+    item_id: str = Field(..., min_length=1, max_length=256, description="Unique item identifier", json_schema_extra={"example": "item_12"})
+    event_type: str = Field(..., max_length=32, description="Type of interaction event (view, like, purchase, watch, click)", json_schema_extra={"example": "click"})
+    timestamp: Optional[str] = Field(None, max_length=64, description="ISO-8601 formatted timestamp", json_schema_extra={"example": "2026-06-11T23:22:34"})
+    dwell_time: Optional[float] = Field(0.0, ge=0.0, le=86400.0, description="Time in seconds spent viewing/interacting with the item", json_schema_extra={"example": 15.4})
 
 VALID_EVENT_TYPES = {"view", "like", "purchase", "watch", "click"}
 

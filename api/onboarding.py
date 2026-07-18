@@ -1,7 +1,7 @@
 """FastAPI router for DPP-based user onboarding."""
 
 from fastapi import APIRouter, HTTPException, Request, Query
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Dict, List, Optional
 from starlette.concurrency import run_in_threadpool
 from utils.dpp import DPPSelector
@@ -11,11 +11,22 @@ from data.feedback import add_feedback
 router = APIRouter()
 
 class QuizRequest(BaseModel):
+    model_config = {"extra": "forbid"}
+
     n_quiz: int = Field(8, ge=3, le=15, description="Number of quiz items to return")
 
 class OnboardingSubmit(BaseModel):
-    user_id: str = Field(..., description="Unique identifier for the cold-start user")
+    model_config = {"extra": "forbid"}
+
+    user_id: str = Field(..., min_length=1, max_length=256, description="Unique identifier for the cold-start user")
     ratings: Dict[str, float] = Field(..., description="Dictionary mapping item_id -> rating (e.g. 1.0 for like, -1.0 or 0.0 for dislike/skip)")
+
+    @field_validator("ratings")
+    @classmethod
+    def _limit_ratings_size(cls, v):
+        if len(v) > 200:
+            raise ValueError("ratings may not contain more than 200 entries")
+        return v
 
 @router.post("/onboarding/quiz")
 async def get_onboarding_quiz(request: Request, body: Optional[QuizRequest] = None):
