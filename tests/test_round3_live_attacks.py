@@ -148,6 +148,39 @@ def test_unbounded_limits(clean_db):
         assert stats["feedback_count"] >= 30
 
 
+def test_n_dos_cap_boundary(clean_db):
+    """ABUSE CHAIN (proven + fixed): unbounded `n` -> candidate blow-up DoS.
+
+    Before: `n` was passed straight through to the engine, where the candidate
+    pool is sized `max(n*3, 50)` and every candidate is re-embedded / scored,
+    plus a unique cache key is minted per `n` (cache pollution). A single
+    `GET /recommend/u?n=1_000_000_000` fanned out to billions of scoring ops.
+
+    After: every `n`/limit is bounded by config.MAX_N_RECOMMENDATIONS. The cap
+    value is accepted; anything above is rejected with 422 before touching the
+    engine. Verified across all recommendation surfaces.
+    """
+    import config
+
+    with TestClient(app) as client:
+        client.post("/items", json={"item_id": "d1", "title": "DoS Probe"})
+
+        cap = config.MAX_N_RECOMMENDATIONS
+
+        # At the cap: accepted.
+        assert client.get(f"/recommend/u?n={cap}").status_code == 200
+        # Over the cap: rejected before any engine work.
+        assert client.get(f"/recommend/u?n={cap + 1}").status_code == 422
+        assert client.get(f"/recommend/u?n=1000000000").status_code == 422
+        # n <= 0 is nonsensical and also rejected.
+        assert client.get("/recommend/u?n=0").status_code == 422
+
+        # Same guard on the other recommendation surfaces.
+        assert client.get(f"/similar/d1?n={cap + 1}").status_code == 422
+        assert client.get(f"/sequential/u?n={cap + 1}").status_code == 422
+        assert client.post("/search", json={"query": "x", "n": cap + 1}).status_code == 422
+
+
 def test_concurrent_read_write(clean_db):
     """Mixed concurrent reads and writes."""
     with TestClient(app) as client:

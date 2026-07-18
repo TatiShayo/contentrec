@@ -36,8 +36,13 @@ COPY data/__init__.py data/database.py data/feedback.py data/items.py ./data/
 COPY models/ ./models/
 COPY tests/ ./tests/
 
-# Create the data directory for SQLite DB and model artifacts
-RUN mkdir -p /app/data
+# Create the data directory for SQLite DB and model artifacts, and run as a
+# non-root user (least privilege — a container escape does not land as root).
+RUN mkdir -p /app/data \
+    && groupadd --system app \
+    && useradd --system --gid app --home-dir /app app \
+    && chown -R app:app /app
+USER app
 
 # Expose the API port
 EXPOSE 8000
