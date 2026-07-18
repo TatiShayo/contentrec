@@ -1,5 +1,7 @@
 from fastapi import FastAPI, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from utils.auth import APIKeyMiddleware
 from api.feedback import router as feedback_router
 from api.items import router as items_router
 from api.recommend import router as recommend_router
@@ -78,14 +80,30 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Content Recommendation Engine", lifespan=lifespan)
 
-# CORS middleware
+# CORS middleware.
+# Never combine a wildcard origin with credentials (browser spec violation +
+# cross-origin data-exfiltration risk). Origins come from config/env; when a
+# wildcard is configured we force credentials off.
+_cors_origins = config.CORS_ALLOW_ORIGINS or []
+_cors_wildcard = "*" in _cors_origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=_cors_origins,
+    allow_credentials=False if _cors_wildcard else bool(_cors_origins),
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    """Return a generic 500 instead of leaking a stack trace to the client."""
+    logging.exception("Unhandled error on %s %s", request.method, request.url.path)
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
+
+
+# Optional API-key authentication (enabled only when config.API_KEY is set).
+app.add_middleware(APIKeyMiddleware)
 
 # Custom sliding-window rate limiting middleware (e.g., 60 requests/min per IP)
 app.add_middleware(RateLimitMiddleware, requests_limit=60, window_sec=60)
@@ -159,4 +177,4 @@ async def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, proxy_headers=True, forwarded_allow_ips="*")
+    uvicorn.run(app, host="127.0.0.1", port=8000, proxy_headers=True, forwarded_allow_ips="*")
