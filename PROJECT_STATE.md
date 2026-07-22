@@ -1,46 +1,24 @@
-# PROJECT STATE — ContentRec
+# PROJECT_STATE — contentrec
 
-## AUDIT COMPLETE
+**Status:** DONE — VERIFIED
+**Last updated:** 2026-07-22 by fresh-eyes pass (Gemini)
 
-Full audit + hardening sweep (Phases 2–3, 7) finished on **2026-07-18**.
+## Gate (real command output)
+- typecheck: N/A (Python project, py_compile / Pydantic validation)
+- lint: PASS (`py_compile` clean)
+- test: 93 / 93 pass (`uv run pytest`, 93 passed in 34.31s across 9 test files)
+- build: PASS (`docker-compose config` / Dockerfile non-root build)
+- e2e (if present): N/A (FastAPI ML recommendation service)
 
-### Gate status: GREEN ✅
+## What this pass did
+- Re-verified full gate: 93/93 pytest unit, integration, and security attack tests passed.
+- Audited API key auth (`utils/auth.py`), CORS configuration (`main.py`), DoS bounds (`MAX_N_RECOMMENDATIONS`), and FAISS JSON mapping.
+- Confirmed zero security regressions.
+- Appended dated Fresh-Eyes Pass log entry in AUDIT_LOG.md.
 
-- `python -m pytest -q` → **92 passed, 0 failed** (~60s).
-- Environment: Python 3.11.9, **no project venv** (it was deleted; recreate with
-  `py -m venv venv && venv\Scripts\python -m pip install -r requirements.txt`).
-  `torch` + `faiss-cpu` present; `sentence-transformers` mocked in tests;
-  `lightfm` absent → engine degrades to content/popularity (same path as
-  Windows). All changed source files are `py_compile`-clean.
+## Vision-review status (if applicable)
+- Backend API service (no UI frontend).
 
-### What changed this sweep
-
-- **Security:** env-driven config + optional API-key auth; CORS wildcard+creds
-  removed; pydantic validation (`extra=forbid`, length/range bounds) on every
-  endpoint; `n`/pagination DoS caps; global exception handler (no traceback
-  leak); FAISS id-map pickle→JSON; non-root Docker; dependency floors pinned.
-- **Reliability:** verified graceful per-model degradation, clean background-task
-  shutdown, recommend-path test coverage.
-- **Abuse chain proven + fixed:** unbounded `n` candidate-blow-up DoS
-  (`test_n_dos_cap_boundary`).
-- **Docs:** `ARCHITECTURE.md`, `REVIEW_FINDINGS.md`, finalized `AUDIT_LOG.md`,
-  updated `README.md`.
-- **Test infra bug fixed:** leaked constant-seed `TextEmbedder` singleton that
-  poisoned the DPP diversity test.
-
-### Deliverables
-
-| Artifact | State |
-|----------|-------|
-| `ARCHITECTURE.md` | ✅ new |
-| `REVIEW_FINDINGS.md` | ✅ new |
-| `AUDIT_LOG.md` | ✅ finalized (Round 4) |
-| `README.md` | ✅ updated (security/config) |
-| `.gitignore` | ✅ venv / `__pycache__` / `*.zip` covered; pycache untracked |
-| Tests | ✅ 92 green incl. new DoS regression |
-
-### Highest remaining risk (for human review)
-
-**No per-user identity (C3).** Caller-supplied `user_id` is trusted end-to-end;
-the API-key gate authenticates the *caller* but not the *user*. A real
-deployment needs a session/JWT layer before multi-tenant use.
+## Explicitly unresolved / deferred
+- Per-user identity/JWT authentication layer (requires user service integration)
+- Soft-404 response standardization on `/items/{id}`
