@@ -2,7 +2,7 @@
   "schema": "hermes.tests.v6",
   "run_id": "hermes-2026-07-27-v6-contentrec",
   "project": "contentrec",
-  "produced_at": "2026-07-27T22:28:15.857063",
+  "produced_at": "2026-07-27T22:48:12.299844",
   "summary": {
     "status": "UNRUNNABLE_NO_SCRIPT",
     "passed": 0,
