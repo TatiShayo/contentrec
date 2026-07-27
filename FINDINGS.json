@@ -3,7 +3,7 @@
   "run_id": "hermes-2026-07-27-v6-contentrec",
   "project": "contentrec",
   "phase": "4.0",
-  "produced_at": "2026-07-27T22:26:50.648750",
+  "produced_at": "2026-07-27T22:27:36.716922",
   "runner_tier": "T1",
   "mode": "static-only",
   "findings": [
