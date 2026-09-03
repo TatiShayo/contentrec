@@ -123,13 +123,14 @@ def test_env():
                 os.remove(path)
             except:
                 pass
-        # Also clean up the faiss map path if it got created
-        map_path = os.path.splitext(path)[0] + "_map.pkl"
-        if os.path.exists(map_path):
-            try:
-                os.remove(map_path)
-            except:
-                pass
+        # Also clean up the faiss map paths if created
+        for ext in ["_map.pkl", "_map.json"]:
+            map_path = os.path.splitext(path)[0] + ext
+            if os.path.exists(map_path):
+                try:
+                    os.remove(map_path)
+                except:
+                    pass
 
 @pytest.fixture
 def clean_db():

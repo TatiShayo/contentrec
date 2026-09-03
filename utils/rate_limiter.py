@@ -17,6 +17,13 @@ class RateLimiter:
     def is_allowed(self, ip: str) -> bool:
         now = time.time()
         with self._lock:
+            # Memory leak protection: periodically prune stale IPs if dictionary grows large
+            if len(self._requests) > 5000:
+                cutoff = now - self.window_sec
+                stale_ips = [k for k, v in self._requests.items() if not v or v[-1] < cutoff]
+                for k in stale_ips:
+                    del self._requests[k]
+
             # Fetch request history for this IP
             history = self._requests.get(ip, [])
             # Prune old requests outside the sliding window

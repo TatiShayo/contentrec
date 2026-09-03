@@ -36,9 +36,18 @@ class RecommendationCache:
     def invalidate_user(self, user_id: str) -> None:
         """Invalidate all cache entries associated with a specific user."""
         with self._lock:
+            prefix_user = f"user:{user_id}:"
+            prefix_seq_user = f"sequential:user:{user_id}:"
+            prefix_seq = f"sequential:{user_id}:"
+            contained_user = f":user:{user_id}:"
+            
             keys_to_del = [
                 key for key in self._cache.keys()
-                if f"user:{user_id}" in key or f"sequential:{user_id}" in key
+                if key.startswith(prefix_user)
+                or key.startswith(prefix_seq_user)
+                or key.startswith(prefix_seq)
+                or contained_user in key
+                or key == f"user:{user_id}"
             ]
             for key in keys_to_del:
                 del self._cache[key]

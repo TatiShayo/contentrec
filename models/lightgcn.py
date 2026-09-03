@@ -45,7 +45,9 @@ class LightGCN(nn.Module):
         
         # Degrees
         rowsum = np.sum(adj, axis=1)
-        d_inv = np.power(rowsum, -0.5, where=rowsum > 0)
+        d_inv = np.zeros_like(rowsum, dtype=np.float32)
+        nonzero_mask = rowsum > 0
+        d_inv[nonzero_mask] = np.power(rowsum[nonzero_mask], -0.5)
         d_inv[np.isinf(d_inv) | np.isnan(d_inv)] = 0.0
         D_inv = np.diag(d_inv)
         

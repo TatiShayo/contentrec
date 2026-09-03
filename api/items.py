@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 from starlette.concurrency import run_in_threadpool
@@ -52,7 +52,7 @@ async def post_item(item: ItemCreate, request: Request):
 async def read_item(item_id: str):
     item = await run_in_threadpool(get_item, item_id)
     if not item:
-        return {"error": "Item not found"}
+        raise HTTPException(status_code=404, detail="Item not found")
     return item
 
 @router.get("/items")

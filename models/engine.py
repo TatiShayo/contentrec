@@ -1272,12 +1272,23 @@ class RecommendationEngine:
                 item_counts[f['item_id']] = item_counts.get(f['item_id'], 0) + 1
             
             sorted_items = sorted(item_counts.items(), key=lambda x: x[1], reverse=True)
-            return [{
-                "item_id": i[0],
-                "score": float(i[1]),
-                "source": "popularity",
-                "explanation": "Trending among all users."
-            } for i in sorted_items[:n]]
+            if sorted_items:
+                return [{
+                    "item_id": i[0],
+                    "score": float(i[1]),
+                    "source": "popularity",
+                    "explanation": "Trending among all users."
+                } for i in sorted_items[:n]]
+                
+            all_catalog_items = get_all_items()
+            if all_catalog_items:
+                return [{
+                    "item_id": item["item_id"],
+                    "score": 1.0,
+                    "source": "catalog_fallback",
+                    "explanation": "Discover items from our catalog."
+                } for item in all_catalog_items[:n]]
+            return []
             
         seen = set()
         unique_items = []

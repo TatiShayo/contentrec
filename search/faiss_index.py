@@ -90,12 +90,17 @@ class FAISSIndex:
             t_emb = embeddings[idx]
             v_emb = vision_embedder.embed_item_image(item)
             fused = lambda_t * t_emb + lambda_v * v_emb
+            if np.isnan(fused).any() or np.isinf(fused).any():
+                fused = np.nan_to_num(fused, nan=0.0, posinf=0.0, neginf=0.0)
+            norm = float(np.linalg.norm(fused))
+            if norm > 0.0:
+                fused = fused / norm
+            else:
+                fused = np.zeros(self.dimension, dtype=np.float32)
+                fused[0] = 1.0
             fused_embeddings.append(fused)
             
         embeddings = np.array(fused_embeddings, dtype=np.float32)
-        # Normalize vectors to unit length so that inner product equals cosine similarity
-        norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
-        embeddings = embeddings / (norms + 1e-10)
 
         with self._lock:
             sub_index = faiss.IndexHNSWFlat(self.dimension, 32, faiss.METRIC_INNER_PRODUCT)
@@ -130,25 +135,50 @@ class FAISSIndex:
             A list of dicts ``[{item_id: str, score: float}, ...]``
             ordered by descending similarity.
         """
+        if n <= 0:
+            return []
+
+        query_arr = np.asarray(query_embedding, dtype=np.float32)
+        if query_arr.size == 0:
+            return []
+
+        # Validate dimensions
+        if query_arr.ndim == 1 and query_arr.shape[0] != self.dimension:
+            raise ValueError(f"Query embedding dimension mismatch: expected {self.dimension}, got {query_arr.shape[0]}")
+        elif query_arr.ndim > 1 and query_arr.shape[-1] != self.dimension:
+            raise ValueError(f"Query embedding dimension mismatch: expected {self.dimension}, got {query_arr.shape[-1]}")
+
+        # Sanitize NaNs/Infs
+        if np.isnan(query_arr).any() or np.isinf(query_arr).any():
+            query_arr = np.nan_to_num(query_arr, nan=0.0, posinf=0.0, neginf=0.0)
+
         with self._lock:
             if self.index.ntotal == 0:
                 return []
 
             # Normalize query vector for cosine similarity
-            q_norm = np.linalg.norm(query_embedding)
-            query = np.asarray(query_embedding, dtype=np.float32) / (q_norm + 1e-10)
-            query = query.reshape(1, -1)
+            q_norm = float(np.linalg.norm(query_arr))
+            if q_norm > 0.0:
+                query = query_arr / q_norm
+            else:
+                query = np.zeros(self.dimension, dtype=np.float32)
+                query[0] = 1.0
+            query = query.reshape(1, -1).astype(np.float32)
             
-            k = min(n, self.index.ntotal)
+            k = min(n * 2, self.index.ntotal)
             distances, indices = self.index.search(query, k)
 
             results: List[dict] = []
+            seen_ids = set()
             for dist, idx in zip(distances[0], indices[0]):
                 if idx == -1:
                     continue
                 item_id = self._row_to_id.get(int(idx))
-                if item_id is not None:
+                if item_id is not None and item_id not in seen_ids:
+                    seen_ids.add(item_id)
                     results.append({"item_id": item_id, "score": float(dist)})
+                    if len(results) >= n:
+                        break
             return results
 
     def search_by_text(self, query: str, n: int = 10) -> List[dict]:
@@ -161,6 +191,8 @@ class FAISSIndex:
         Returns:
             Same format as :meth:`search`.
         """
+        if n <= 0:
+            return []
         embedding = self._embedder.encode(query)
         return self.search(embedding, n=n)
 
@@ -183,17 +215,28 @@ class FAISSIndex:
         lambda_v = 0.3
         fused = lambda_t * t_emb + lambda_v * v_emb
         
+        if np.isnan(fused).any() or np.isinf(fused).any():
+            fused = np.nan_to_num(fused, nan=0.0, posinf=0.0, neginf=0.0)
+            
         # Normalize vector to unit length
-        norm = np.linalg.norm(fused)
-        embedding = fused / (norm + 1e-10)
+        norm = float(np.linalg.norm(fused))
+        if norm > 0.0:
+            embedding = fused / norm
+        else:
+            embedding = np.zeros(self.dimension, dtype=np.float32)
+            embedding[0] = 1.0
 
         with self._lock:
             item_id = item["item_id"]
             if item_id in self._id_to_row:
                 old_id = self._id_to_row[item_id]
-                selector = faiss.IDSelectorArray(np.array([old_id], dtype=np.int64))
-                self.index.remove_ids(selector)
-                int_id = old_id
+                try:
+                    selector = faiss.IDSelectorArray(np.array([old_id], dtype=np.int64))
+                    self.index.remove_ids(selector)
+                except Exception:
+                    pass
+                int_id = self._next_id
+                self._next_id += 1
             else:
                 int_id = self._next_id
                 self._next_id += 1

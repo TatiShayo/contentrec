@@ -23,6 +23,7 @@ class TextEmbedder:
     The model is lazily loaded on first encode call to avoid slow imports.
     """
 
+    dimension: int = EMBEDDING_DIM
     _instance: Optional["TextEmbedder"] = None
     _instance_lock = threading.Lock()
 
@@ -37,6 +38,7 @@ class TextEmbedder:
     def __init__(self) -> None:
         if self._initialized:
             return
+        self.dimension = EMBEDDING_DIM
         self._model = None
         self._lock = threading.Lock()
         self._initialized = True
@@ -77,7 +79,16 @@ class TextEmbedder:
             embedding = self._model.encode(
                 text, normalize_embeddings=True, show_progress_bar=False
             )
-        return np.asarray(embedding, dtype=np.float32)
+        arr = np.asarray(embedding, dtype=np.float32)
+        if np.isnan(arr).any() or np.isinf(arr).any():
+            arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
+        norm = float(np.linalg.norm(arr))
+        if norm > 0.0:
+            arr = arr / norm
+        else:
+            arr = np.zeros(self.dimension, dtype=np.float32)
+            arr[0] = 1.0
+        return arr
 
     def encode_batch(self, texts: List[str]) -> np.ndarray:
         """Encode a batch of text strings into normalized embedding vectors.
@@ -95,7 +106,12 @@ class TextEmbedder:
             embeddings = self._model.encode(
                 texts, normalize_embeddings=True, show_progress_bar=False
             )
-        return np.asarray(embeddings, dtype=np.float32)
+        arr = np.asarray(embeddings, dtype=np.float32)
+        if np.isnan(arr).any() or np.isinf(arr).any():
+            arr = np.nan_to_num(arr, nan=0.0, posinf=0.0, neginf=0.0)
+        norms = np.linalg.norm(arr, axis=1, keepdims=True)
+        norms[norms == 0.0] = 1.0
+        return arr / norms
 
     def embed_item(self, item: dict) -> np.ndarray:
         """Create an embedding from an item's title, tags, and category.

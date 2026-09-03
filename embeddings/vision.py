@@ -41,15 +41,19 @@ class VisionEmbedder:
             text_emb = np.zeros(EMBEDDING_DIM, dtype=np.float32)
             
         # 2. Add deterministic visual noise to simulate visual variance
-        dim = len(text_emb)
+        dim = len(text_emb) if len(text_emb) > 0 else EMBEDDING_DIM
         noise = self._generate_deterministic_noise(item_id, dim=dim)
         fused = text_emb + noise
         
+        if np.isnan(fused).any() or np.isinf(fused).any():
+            fused = np.nan_to_num(fused, nan=0.0, posinf=0.0, neginf=0.0)
+            
         # 3. L2-normalize the result
-        norm = np.linalg.norm(fused)
-        if norm > 0:
+        norm = float(np.linalg.norm(fused))
+        if norm > 0.0:
             fused = fused / norm
         else:
-            fused = text_emb
+            fused = np.zeros(dim, dtype=np.float32)
+            fused[0] = 1.0
             
-        return fused
+        return fused.astype(np.float32)
