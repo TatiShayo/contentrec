@@ -13,7 +13,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 class SASRec(nn.Module):
     """Self-Attentive Sequential Recommendation model.
 
@@ -141,7 +140,7 @@ class SASRec(nn.Module):
 
         # Project to item logits
         logits = self.output_layer(x)
-        
+
         if not return_dwell:
             return logits
 

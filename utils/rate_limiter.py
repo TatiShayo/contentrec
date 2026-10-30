@@ -4,7 +4,6 @@ from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 
-
 class RateLimiter:
     """Thread-safe sliding-window rate limiter for client IP addresses."""
 
@@ -24,19 +23,17 @@ class RateLimiter:
                 for k in stale_ips:
                     del self._requests[k]
 
-            # Fetch request history for this IP
             history = self._requests.get(ip, [])
             # Prune old requests outside the sliding window
             history = [t for t in history if now - t < self.window_sec]
-            
+
             if len(history) >= self.requests_limit:
                 self._requests[ip] = history
                 return False
-                
+
             history.append(now)
             self._requests[ip] = history
             return True
-
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """FastAPI middleware that restricts request rates based on client IP."""
@@ -50,7 +47,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         import config
         if request.url.path in ["/health", "/metrics", "/stats"] or getattr(config, "TESTING", False):
             return await call_next(request)
-            
+
         client_ip = (
             request.headers.get("x-forwarded-for", "").split(",")[0].strip()
             or request.headers.get("x-real-ip", "")
@@ -61,5 +58,5 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
                 status_code=429,
                 content={"detail": "Too many requests. Please try again later."}
             )
-            
+
         return await call_next(request)

@@ -3,7 +3,7 @@ from data.database import get_db_connection
 
 def add_item(item_id, title, tags="", category="", metadata=None):
     metadata_json = json.dumps(metadata) if metadata else None
-    
+
     with get_db_connection() as conn:
         cursor = conn.cursor()
         cursor.execute('''
@@ -72,4 +72,3 @@ def get_items_by_ids(item_ids):
             item['metadata'] = json.loads(item['metadata_json']) if item['metadata_json'] else None
             result[item['item_id']] = item
         return result
-

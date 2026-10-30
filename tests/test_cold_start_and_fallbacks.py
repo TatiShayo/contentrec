@@ -14,7 +14,6 @@ from data.feedback import add_feedback, get_all_feedback
 from models.engine import RecommendationEngine
 from utils.dpp import DPPSelector, ColdStartProfileBuilder
 
-
 class TestColdStartRecommendationFallbacks:
     def test_cold_start_empty_database(self, clean_db):
         engine = RecommendationEngine()
@@ -64,7 +63,6 @@ class TestColdStartRecommendationFallbacks:
         assert recs[0]["item_id"] == "item_pop_2"
         assert recs[0]["source"] == "popularity"
         assert recs[1]["item_id"] == "item_pop_1"
-
 
 class TestDPPOnboardingAndProfileBootstrap:
     def test_dpp_select_diverse_items_empty(self):
@@ -117,7 +115,6 @@ class TestDPPOnboardingAndProfileBootstrap:
         )
         assert gcn_profile.shape == (64,)
         assert sbert_profile.shape == (384,)
-
 
 class TestModelDegradationAndExclusionFilters:
     def test_recommend_with_exclusion_filters(self, clean_db):

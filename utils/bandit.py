@@ -31,7 +31,7 @@ class NeuralLinearBandit:
         self.alpha = alpha  # Thompson sampling exploration parameter
         self.discount = discount
         self.encoder = MLPEncoder(input_dim=context_dim, feature_dim=feature_dim)
-        
+
         # 6 weights: w_rel, w_fresh, w_fatigue, w_context, w_rl, w_ssl
         self.arms = {
             0: (1.0, 0.2, 0.3, 0.4, 0.1, 0.15), # Default
@@ -41,13 +41,12 @@ class NeuralLinearBandit:
             4: (1.2, 0.1, 0.1, 0.1, 0.2, 0.25)  # Relevance-heavy
         }
         self.num_actions = len(self.arms)
-        
-        # Initialize Bayesian regression parameters for each arm
+
         # B_a = covariance inverse (precision matrix), f_a = cumulative reward vector
         self.B = {a: np.eye(feature_dim) for a in range(self.num_actions)}
         self.f = {a: np.zeros(feature_dim) for a in range(self.num_actions)}
         self.mu = {a: np.zeros(feature_dim) for a in range(self.num_actions)}
-        
+
         self.load_state()
 
     def get_phi(self, context_vector: np.ndarray) -> np.ndarray:
@@ -58,7 +57,7 @@ class NeuralLinearBandit:
     def select_action(self, context_vector: np.ndarray) -> Tuple[int, Tuple[float, float, float, float]]:
         phi = self.get_phi(context_vector)
         sampled_scores = []
-        
+
         for a in range(self.num_actions):
             # Sigma_a = B_a^-1
             Sigma = np.linalg.inv(self.B[a])
@@ -66,17 +65,17 @@ class NeuralLinearBandit:
             beta_sampled = np.random.multivariate_normal(self.mu[a], (self.alpha ** 2) * Sigma)
             score = np.dot(phi, beta_sampled)
             sampled_scores.append(score)
-            
+
         best_arm = int(np.argmax(sampled_scores))
         return best_arm, self.arms[best_arm]
 
     def update(self, arm_id: int, context_vector: np.ndarray, reward: float):
         phi = self.get_phi(context_vector)
-        
+
         # Apply discount to prevent posterior collapse/forget older sessions
         self.B[arm_id] = self.discount * self.B[arm_id] + (1 - self.discount) * np.eye(self.feature_dim)
         self.f[arm_id] = self.discount * self.f[arm_id]
-        
+
         # Bayesian update:
         # B_a <- B_a + phi * phi^T
         self.B[arm_id] += np.outer(phi, phi)
@@ -84,7 +83,7 @@ class NeuralLinearBandit:
         self.f[arm_id] += reward * phi
         # mu_a <- B_a^-1 * f_a
         self.mu[arm_id] = np.linalg.inv(self.B[arm_id]).dot(self.f[arm_id])
-        
+
         self.save_state()
 
     def save_state(self):

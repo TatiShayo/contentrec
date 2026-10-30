@@ -21,7 +21,6 @@ import asyncio
 import logging
 from contextlib import asynccontextmanager
 
-# Initialize system-wide structured logging configuration
 setup_logging()
 
 async def check_retraining_loop(app: FastAPI):
@@ -57,9 +56,9 @@ async def lifespan(app: FastAPI):
     app.state.faiss_index = app.state.engine.faiss_index
     # Start time-based background scheduler check loop
     retrain_task = asyncio.create_task(check_retraining_loop(app))
-    
+
     yield
-    
+
     # Shutdown events: Cleanly cancel the retraining loop task
     retrain_task.cancel()
     try:
@@ -68,7 +67,7 @@ async def lifespan(app: FastAPI):
         logging.info("Retraining loop task successfully cancelled.")
     except Exception as e:
         logging.error(f"Error when cancelling retraining loop task: {e}")
-        
+
     # Shutdown events: Stop/join the SASRec online training background thread
     engine = getattr(app.state, 'engine', None)
     if engine is not None:
@@ -94,13 +93,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
     """Return a generic 500 instead of leaking a stack trace to the client."""
     logging.exception("Unhandled error on %s %s", request.method, request.url.path)
     return JSONResponse(status_code=500, content={"detail": "Internal server error"})
-
 
 # Optional API-key authentication (enabled only when config.API_KEY is set).
 app.add_middleware(APIKeyMiddleware)
@@ -110,7 +107,6 @@ app.add_middleware(RateLimitMiddleware, requests_limit=60, window_sec=60)
 
 # Custom performance metrics logging middleware
 app.add_middleware(LoggingMiddleware)
-
 
 # Mount routers
 app.include_router(feedback_router, tags=["feedback"])
@@ -125,7 +121,7 @@ async def train_model(background_tasks: BackgroundTasks):
     def train_and_sync():
         app.state.engine.train()
         app.state.faiss_index = app.state.engine.faiss_index
-        
+
     background_tasks.add_task(train_and_sync)
     return {"status": "training started in background"}
 
@@ -135,10 +131,10 @@ async def get_metrics(request: Request):
     engine = getattr(request.app.state, 'engine', None)
     if engine is None:
         return {"status": "engine not initialized"}
-        
+
     feedback_count = await run_in_threadpool(get_feedback_count)
     items = await run_in_threadpool(get_all_items)
-    
+
     metrics = engine.metrics.get_metrics()
     metrics.update({
         "database": {
@@ -155,7 +151,6 @@ async def get_stats():
     items = await run_in_threadpool(get_all_items)
     item_count = len(items)
 
-    # Get unique users from feedback
     def get_user_count():
         from data.database import get_db_connection
         with get_db_connection() as conn:

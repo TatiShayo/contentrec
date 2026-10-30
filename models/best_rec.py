@@ -43,7 +43,7 @@ class BESTRec(nn.Module):
 
     def forward(self, seq: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Forward pass.
-        
+
         Returns:
             Tuple of:
                 - universal user representation (batch_size, 256)
@@ -69,7 +69,6 @@ class BESTRec(nn.Module):
         nap_logits = self.nap_head(pooled)
 
         return user_emb, out, nap_logits
-
 
 class BESTRecTrainer:
     def __init__(self, model: BESTRec, lr: float = 1e-3, device: str = 'cpu'):
@@ -119,25 +118,24 @@ class BESTRecTrainer:
             seq_batch = X[batch_idx]
             cat_batch = y_cat[batch_idx]
 
-            # 1. Masked Item Prediction (MIP) task: mask 15% of tokens
             # mask token index is num_items
             mask_token = self.model.num_items
             masked_seq = seq_batch.clone()
-            
+
             # Mask generation
             prob_matrix = torch.full(masked_seq.shape, 0.15, device=self.device)
             # Don't mask padding (0)
             prob_matrix.masked_fill_(masked_seq == 0, 0.0)
             mask_indices = torch.bernoulli(prob_matrix).bool()
-            
+
             masked_seq[mask_indices] = mask_token
 
             # Forward
             self.optimizer.zero_grad()
-            
+
             # View 1: perturbed with masking
             user_emb1, seq_rep1, nap_logits = self.model(masked_seq)
-            
+
             # View 2: original sequence with dropout (SCL contrastive target)
             user_emb2, _, _ = self.model(seq_batch)
 

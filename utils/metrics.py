@@ -4,14 +4,12 @@ import sys
 from typing import Dict, List, Any
 import config
 
-
 def _calculate_percentile(latencies: List[float], percentile: float) -> float:
     if not latencies:
         return 0.0
     sorted_latencies = sorted(latencies)
     idx = int(len(sorted_latencies) * percentile)
     return round(sorted_latencies[min(idx, len(sorted_latencies) - 1)], 4)
-
 
 class MetricsTracker:
     """Thread-safe collector for recommendation engine operational metrics."""
@@ -22,19 +20,19 @@ class MetricsTracker:
         self.cache_misses = 0
         self.cohort_counts = {"A": 0, "B": 0}
         self.cohort_conversions = {"A": 0, "B": 0}
-        
+
         # Buffer to map (user_id, item_id) -> (cohort, timestamp)
         self.served_recs: Dict[tuple, tuple] = {}
         # Buffer to map (user_id, item_id) -> (arm_id, context_vector, timestamp)
         self.served_bandit_arms: Dict[tuple, tuple] = {}
-        
+
         self.latencies: Dict[str, List[float]] = {
             "recommend": [],
             "sequential": [],
             "search": []
         }
         self.max_latency_records = 1000
-        
+
         # SLA & Request tracking
         self.total_requests_counted = 0
         self.sla_violations = 0
@@ -59,7 +57,7 @@ class MetricsTracker:
             now = time.time()
             for item_id in item_ids:
                 self.served_recs[(user_id, item_id)] = (cohort, now)
-            
+
             # Prune entries older than 1 hour (3600 seconds)
             cutoff = now - 3600
             expired_keys = [k for k, v in self.served_recs.items() if v[1] < cutoff]
@@ -83,9 +81,8 @@ class MetricsTracker:
                 if time.time() - timestamp <= 3600:
                     if cohort in self.cohort_conversions:
                         self.cohort_conversions[cohort] += 1
-                    # Remove to prevent double counting
                     del self.served_recs[key]
-                    
+
             if key in self.served_bandit_arms:
                 arm_id, context_vector, timestamp = self.served_bandit_arms[key]
                 if time.time() - timestamp <= 3600:
@@ -100,7 +97,7 @@ class MetricsTracker:
                 # Cap the list size
                 if len(self.latencies[endpoint]) > self.max_latency_records:
                     self.latencies[endpoint].pop(0)
-            
+
             self.total_requests_counted += 1
             threshold = getattr(config, 'LATENCY_SLA_ALERT_THRESHOLD_SEC', 0.15)
             if duration_sec > threshold:
@@ -110,7 +107,7 @@ class MetricsTracker:
         with self._lock:
             total_cache_queries = self.cache_hits + self.cache_misses
             hit_rate = (self.cache_hits / total_cache_queries) if total_cache_queries > 0 else 0.0
-            
+
             avg_latencies = {}
             p95_latencies = {}
             p99_latencies = {}
@@ -158,4 +155,3 @@ class MetricsTracker:
                 },
                 "estimated_memory_bytes": mem_footprint
             }
-

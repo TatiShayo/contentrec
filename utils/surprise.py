@@ -20,7 +20,7 @@ class SurpriseController:
     def get_user_dirichlet_prior(self, user_feedback: List[dict], item_details: Dict[str, dict]) -> np.ndarray:
         """Construct Dirichlet parameter vector alpha (prior = 1.0 for Laplace smoothing)."""
         alpha = np.ones(self.num_cats, dtype=np.float32)
-        
+
         for f in user_feedback:
             item_id = f["item_id"]
             details = item_details.get(item_id)
@@ -30,7 +30,7 @@ class SurpriseController:
                     # Increment count for this category
                     idx = self.cat_to_idx[cat]
                     alpha[idx] += 1.0
-                    
+
         return alpha
 
     def compute_kl_divergence(self, p: np.ndarray, q: np.ndarray) -> float:
@@ -49,18 +49,16 @@ class SurpriseController:
         item_details: Dict[str, dict]
     ) -> Tuple[float, float, float]:
         """Adjust MMR diversity lambda based on KL surprise difference.
-        
+
         Returns:
             Tuple of:
                 - adjusted_lambda: float clipped to [0.0, 1.0]
                 - actual_kl: float representing the KL divergence
                 - error: float representing actual_kl - target_kl
         """
-        # 1. P (User Preference Distribution) from Dirichlet mean
         alpha = self.get_user_dirichlet_prior(user_feedback, item_details)
         p = alpha / np.sum(alpha)
-        
-        # 2. Q (Candidate Recommendations Category Distribution)
+
         # Count category frequencies in candidate set
         q_counts = np.ones(self.num_cats, dtype=np.float32) # Laplace smooth
         for c in candidates[:10]: # Look at top 10 candidates
@@ -70,18 +68,16 @@ class SurpriseController:
                 cat = (item.get("category") or "").lower()
                 if cat in self.cat_to_idx:
                     q_counts[self.cat_to_idx[cat]] += 1.0
-                    
+
         q = q_counts / np.sum(q_counts)
-        
-        # 3. Compute actual KL divergence
+
         actual_kl = self.compute_kl_divergence(p, q)
-        
-        # 4. PID controller error: actual - target
+
         error = actual_kl - self.target_kl
-        
+
         # If error > 0 (too surprising / high KL), we increase lambda (reduce diversity)
         # If error < 0 (not surprising enough / low KL), we decrease lambda (increase diversity)
         adjusted_lambda = base_lambda + self.kp * error
         adjusted_lambda = max(0.0, min(1.0, adjusted_lambda))
-        
+
         return float(adjusted_lambda), actual_kl, float(error)

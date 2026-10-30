@@ -2,7 +2,6 @@ import time
 import threading
 from typing import Any, Dict, Optional, Tuple
 
-
 class RecommendationCache:
     """Thread-safe In-Memory TTL Cache for recommendations and search."""
 
@@ -40,7 +39,7 @@ class RecommendationCache:
             prefix_seq_user = f"sequential:user:{user_id}:"
             prefix_seq = f"sequential:{user_id}:"
             contained_user = f":user:{user_id}:"
-            
+
             keys_to_del = [
                 key for key in self._cache.keys()
                 if key.startswith(prefix_user)

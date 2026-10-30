@@ -42,7 +42,7 @@ class LinearShapleyExplainer:
         }
 
         total_diff = sum(phi.values())
-        
+
         # Build natural-language explanation string
         parts = []
         sorted_phi = sorted(phi.items(), key=lambda x: abs(x[1]), reverse=True)
@@ -74,7 +74,6 @@ class LinearShapleyExplainer:
         explanation_text = f"Scores {diff_sign}{total_diff:.2f} vs average because: {', '.join(parts)}."
         return total_diff, phi, explanation_text
 
-
 class SASRecLimeExplainer:
     """Approximates feature importance for transformer sequence items via LIME perturbation models."""
 
@@ -93,7 +92,7 @@ class SASRecLimeExplainer:
             return "Based on your recent sequence of interactions."
 
         history_len = len(user_history_indices)
-        
+
         # Generate perturbations: binary matrix of shape (num_perturbations, history_len)
         np.random.seed(target_item_idx)
         X = np.random.binomial(1, 1 - drop_prob, size=(num_perturbations, history_len))
@@ -108,14 +107,14 @@ class SASRecLimeExplainer:
                 perturbed_seq = [user_history_indices[i] for i in range(history_len) if X[m, i] == 1]
                 if not perturbed_seq:
                     perturbed_seq = [0]
-                
+
                 # Pad sequence to max_seq_len
                 pad_len = model.max_seq_len - len(perturbed_seq)
                 padded = [0] * pad_len + perturbed_seq
-                
+
                 input_tensor = torch.tensor([padded], dtype=torch.long)
                 logits, _, _ = model(input_tensor)
-                
+
                 # Retrieve log probs of target item at the last sequence step
                 last_logits = logits[0, -1, :]
                 log_probs = torch.log_softmax(last_logits, dim=0)
@@ -125,7 +124,7 @@ class SASRecLimeExplainer:
         # Fit a simple Ridge regression: y = X * beta
         X_design = X.astype(np.float32)
         y_vec = np.array(y, dtype=np.float32)
-        
+
         # Ridge normal equation: beta = (X^T X + lambda I)^-1 X^T y
         reg_lambda = 0.1
         try:
@@ -144,7 +143,7 @@ class SASRecLimeExplainer:
         # Sort by positive contribution
         item_contributions.sort(key=lambda x: x[1], reverse=True)
         top_contrib = [f"'{name}' (contributed +{val:.2f})" for name, val in item_contributions[:2] if val > 0.01]
-        
+
         if top_contrib:
             return f"Recommended due to your recent interest in: {', '.join(top_contrib)}."
         return "Based on your recent sequence of interactions."

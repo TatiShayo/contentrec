@@ -2,15 +2,12 @@ import sys
 from unittest.mock import MagicMock
 import numpy as np
 
-# ---------------------------------------------------------------------------
 # Global Mock for sentence_transformers to avoid downloading/loading model during tests
-# ---------------------------------------------------------------------------
 _MOCK_DIM = 384
 mock_st_model = MagicMock()
 
 import hashlib
 import re
-
 
 def _encode_one(text: str, normalize_embeddings: bool) -> np.ndarray:
     """Deterministic feature-hashing embedding.
@@ -37,7 +34,6 @@ def _encode_one(text: str, normalize_embeddings: bool) -> np.ndarray:
         vec /= np.linalg.norm(vec) + 1e-10
     return vec
 
-
 def _mock_encode(text_or_texts, normalize_embeddings=True, show_progress_bar=False):
     if isinstance(text_or_texts, str):
         return _encode_one(text_or_texts, normalize_embeddings)
@@ -53,13 +49,11 @@ mock_st_module.SentenceTransformer = lambda *args, **kwargs: mock_st_model
 
 sys.modules["sentence_transformers"] = mock_st_module
 
-
 import pytest
 import os
 import tempfile
 import config
 from data.database import init_db
-
 
 @pytest.fixture(autouse=True)
 def _deterministic_seeds():
@@ -79,36 +73,34 @@ def _deterministic_seeds():
         pass
     yield
 
-
 @pytest.fixture(autouse=True)
 def test_env():
-    # Create a fresh temp file for each test
     fd, db_path = tempfile.mkstemp(suffix=".db")
     os.close(fd)
     model_path = db_path + ".pkl"
     faiss_path = db_path + ".index"
     sasrec_path = db_path + "_sasrec.pt"
     sasrec_map_path = db_path + "_sasrec.pkl"
-    
+
     original_db = config.DATABASE_PATH
     original_model = config.MODEL_PATH
     original_faiss = config.FAISS_INDEX_PATH
     original_sasrec = config.SASREC_MODEL_PATH
     original_sasrec_map = config.SASREC_MAP_PATH
     original_testing = getattr(config, "TESTING", False)
-    
+
     config.DATABASE_PATH = db_path
     config.MODEL_PATH = model_path
     config.FAISS_INDEX_PATH = faiss_path
     config.SASREC_MODEL_PATH = sasrec_path
     config.SASREC_MAP_PATH = sasrec_map_path
     config.TESTING = True
-    
+
     # Re-initialize the DB for the new path
     init_db()
-    
+
     yield
-    
+
     # Cleanup
     config.DATABASE_PATH = original_db
     config.MODEL_PATH = original_model
@@ -116,7 +108,7 @@ def test_env():
     config.SASREC_MODEL_PATH = original_sasrec
     config.SASREC_MAP_PATH = original_sasrec_map
     config.TESTING = original_testing
-    
+
     for path in [db_path, model_path, faiss_path, sasrec_path, sasrec_map_path]:
         if os.path.exists(path):
             try:

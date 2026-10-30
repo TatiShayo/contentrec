@@ -7,7 +7,6 @@ import config
 
 router = APIRouter(tags=["sequential"])
 
-
 def _get_sequential_recs(request, user_id, n, exclude_categories=None, exclude_items=None,
                          device=None, location=None, time_of_day=None):
     """Get sequential recommendations for a user (blocking), applying exclusions and context re-ranking."""
@@ -56,7 +55,7 @@ def _get_sequential_recs(request, user_id, n, exclude_categories=None, exclude_i
             item_id = seq_idx_to_item.get(idx, None)
             if item_id:
                 candidate_ids.append(item_id)
-        
+
         from data.items import get_items_by_ids
         item_details = get_items_by_ids(candidate_ids) if candidate_ids else {}
 
@@ -91,13 +90,13 @@ def _get_sequential_recs(request, user_id, n, exclude_categories=None, exclude_i
         for r in results:
             item_id = r["item_id"]
             details = item_details.get(item_id) or {}
-            
+
             relevance = r["score"]
             freshness = get_freshness_score(details)
             context_match = get_context_match_score(details, device, location, time_of_day)
-            
+
             final_score = relevance + (freshness * 0.2) + (context_match * 0.4)
-            
+
             exp = r["explanation"]
             if device or time_of_day or location:
                 reasons = []
@@ -107,17 +106,16 @@ def _get_sequential_recs(request, user_id, n, exclude_categories=None, exclude_i
                     reasons.append(f"suited for your {time_of_day} session")
                 if reasons:
                     exp = f"Sequential recommendation, " + " and ".join(reasons) + "."
-            
+
             r_copy = r.copy()
             r_copy["score"] = round(final_score, 4)
             r_copy["explanation"] = exp
             re_ranked.append(r_copy)
-            
+
         return sorted(re_ranked, key=lambda x: x["score"], reverse=True)[:n]
     except Exception as e:
         print(f"Sequential recommendation error: {e}")
         return []
-
 
 @router.get("/sequential/{user_id}")
 async def get_sequential_recommendations(
@@ -133,15 +131,15 @@ async def get_sequential_recommendations(
     """Get next-item recommendations based on user's interaction sequence, supporting exclusions and context-aware scoring."""
     engine = request.app.state.engine
     cache_key = f"sequential:user:{user_id}:n:{n}:ex_cats:{exclude_categories}:ex_items:{exclude_items}:dev:{device}:loc:{location}:tod:{time_of_day}"
-    
+
     # Check cache
     cached = engine.cache.get(cache_key)
     if cached is not None:
         engine.metrics.record_cache_hit()
         return {"user_id": user_id, "recommendations": cached, "cached": True}
-        
+
     engine.metrics.record_cache_miss()
-    
+
     start_time = time.time()
     results = await run_in_threadpool(
         _get_sequential_recs, request, user_id, n,
@@ -149,13 +147,13 @@ async def get_sequential_recommendations(
         device, location, time_of_day
     )
     duration = time.time() - start_time
-    
+
     # Record sequential latency
     engine.metrics.record_latency("sequential", duration)
-    
+
     # Store in cache
     engine.cache.set(cache_key, results)
-    
+
     return {
         "user_id": user_id, 
         "recommendations": results, 

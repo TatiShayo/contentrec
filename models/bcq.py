@@ -41,14 +41,14 @@ class BCQQNetwork(nn.Module):
             item_emb: shape (batch_size, item_emb_dim) or (batch_size, num_candidates, item_emb_dim)
         """
         user_latent = self.user_tower(state)  # (batch_size, latent_dim)
-        
+
         if len(item_emb.shape) == 3:
             # item_emb shape: (batch_size, num_candidates, item_emb_dim)
             batch_size, num_cand, _ = item_emb.shape
             item_emb_flat = item_emb.view(-1, self.item_emb_dim)
             item_latent_flat = self.item_tower(item_emb_flat)  # (batch_size * num_cand, latent_dim)
             item_latent = item_latent_flat.view(batch_size, num_cand, self.latent_dim)
-            
+
             # Dot product along latent dimension: (batch_size, num_cand)
             user_latent_unsqueezed = user_latent.unsqueeze(1)  # (batch_size, 1, latent_dim)
             q_values = torch.sum(user_latent_unsqueezed * item_latent, dim=-1)
@@ -58,7 +58,6 @@ class BCQQNetwork(nn.Module):
             item_latent = self.item_tower(item_emb)  # (batch_size, latent_dim)
             q_values = torch.sum(user_latent * item_latent, dim=-1)
             return q_values
-
 
 class BCQTrainer:
     """Trainer class for BCQ Q-network extracting transitions from SQLite logs."""
@@ -89,7 +88,7 @@ class BCQTrainer:
             Tuple of (states, action_embs, rewards, next_states, next_action_embs)
         """
         item_map = {item['item_id']: item for item in items}
-        
+
         # Build pre-computed SBERT embeddings for fast indexing
         item_embeddings = {}
         for item in items:
@@ -103,7 +102,7 @@ class BCQTrainer:
         user_history = defaultdict(list)
         for fb in feedback:
             user_history[fb['user_id']].append(fb)
-            
+
         states, action_embs, rewards, next_states, next_action_embs = [], [], [], [], []
 
         for user_id, events in user_history.items():
@@ -135,7 +134,6 @@ class BCQTrainer:
                 action_item_id = events[t]['item_id']
                 action_emb = item_embeddings.get(action_item_id, np.zeros(384))
 
-                # Update fatigue counts
                 item = item_map.get(action_item_id)
                 if item and item.get("category"):
                     category_counts[item["category"].lower()] += 1
@@ -149,11 +147,11 @@ class BCQTrainer:
                 # Next state is history up to step t+1
                 next_history_items = [e['item_id'] for e in events[:t+1]]
                 next_state_emb = np.mean([item_embeddings.get(iid, np.zeros(384)) for iid in next_history_items], axis=0)
-                
+
                 next_fatigue_vec = np.zeros(len(self.categories), dtype=np.float32)
                 for cat_idx, cat_name in enumerate(self.categories):
                     next_fatigue_vec[cat_idx] = float(category_counts[cat_name])
-                    
+
                 next_step_idx = np.array([float(t + 1)], dtype=np.float32)
                 next_state_vec = np.concatenate([next_state_emb, next_fatigue_vec, next_step_idx])
 
@@ -168,7 +166,6 @@ class BCQTrainer:
                 next_action_embs.append(next_action_emb)
 
         if not states:
-            # Return empty arrays
             return (np.empty((0, 390)), np.empty((0, 384)), np.empty((0,)), np.empty((0, 390)), np.empty((0, 384)))
 
         return (
@@ -182,7 +179,7 @@ class BCQTrainer:
     def train(self, feedback: List[dict], items: List[dict], embedder: Any, epochs: int = 10) -> List[float]:
         """Train the Q-network offline using Double Q-learning TD updates."""
         states, action_embs, rewards, next_states, next_action_embs = self.prepare_transitions(feedback, items, embedder)
-        
+
         if len(states) == 0:
             logging.info("Insufficient transition data to train BCQ Q-network.")
             return []
@@ -200,7 +197,7 @@ class BCQTrainer:
 
             for i in range(0, dataset_size, self.batch_size):
                 batch_idx = indices[i : i + self.batch_size]
-                
+
                 s_batch = torch.tensor(states[batch_idx], dtype=torch.float32)
                 a_emb_batch = torch.tensor(action_embs[batch_idx], dtype=torch.float32)
                 r_batch = torch.tensor(rewards[batch_idx], dtype=torch.float32)

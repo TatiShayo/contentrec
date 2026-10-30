@@ -32,17 +32,17 @@ class OnboardingSubmit(BaseModel):
 async def get_onboarding_quiz(request: Request, body: Optional[QuizRequest] = None):
     """Retrieve a diverse set of onboarding items chosen via Determinantal Point Process (DPP)."""
     n_quiz = body.n_quiz if body else 8
-    
+
     # Run in thread pool to prevent blocking the event loop
     def select_items():
         all_items = get_all_items()
         return DPPSelector.select_diverse_items(all_items, pool_size=50, n_quiz=n_quiz)
-        
+
     quiz_items = await run_in_threadpool(select_items)
-    
+
     if not quiz_items:
         raise HTTPException(status_code=404, detail="No items available to generate quiz.")
-        
+
     return {
         "items": [
             {
@@ -58,8 +58,7 @@ async def get_onboarding_quiz(request: Request, body: Optional[QuizRequest] = No
 async def submit_onboarding_ratings(submit: OnboardingSubmit, request: Request):
     """Submit ratings for onboarding items, logging them to database to bootstrap user taste profiles."""
     engine = getattr(request.app.state, 'engine', None)
-    
-    # 1. Log ratings as feedback in SQLite
+
     def log_feedback():
         logged_count = 0
         for item_id, rating in submit.ratings.items():
@@ -73,16 +72,15 @@ async def submit_onboarding_ratings(submit: OnboardingSubmit, request: Request):
             )
             logged_count += 1
         return logged_count
-        
+
     count = await run_in_threadpool(log_feedback)
-    
-    # 2. Invalidate cache for this user
+
     if engine is not None:
         engine.cache.invalidate_user(submit.user_id)
-        
+
         # Increment retraining counter
         engine.new_feedback_counter += count
-        
+
     return {
         "status": "ok",
         "user_id": submit.user_id,

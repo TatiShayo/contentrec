@@ -15,7 +15,6 @@ import numpy as np
 MODEL_NAME = "all-MiniLM-L6-v2"
 EMBEDDING_DIM = 384
 
-
 class TextEmbedder:
     """Thread-safe singleton for generating text embeddings.
 
@@ -43,9 +42,7 @@ class TextEmbedder:
         self._lock = threading.Lock()
         self._initialized = True
 
-    # ------------------------------------------------------------------
     # Lazy model loading
-    # ------------------------------------------------------------------
 
     def _load_model(self) -> None:
         """Load the sentence-transformers model (called once, under lock)."""
@@ -61,9 +58,7 @@ class TextEmbedder:
             with self._lock:
                 self._load_model()
 
-    # ------------------------------------------------------------------
     # Public API
-    # ------------------------------------------------------------------
 
     def encode(self, text: str) -> np.ndarray:
         """Encode a single text string into a normalized embedding vector.

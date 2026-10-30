@@ -7,11 +7,9 @@ import concurrent.futures
 from fastapi.testclient import TestClient
 from main import app
 
-
 def test_no_auth_on_any_endpoint(clean_db):
     """CONFIRMED: Zero authentication on all endpoints."""
     with TestClient(app) as client:
-        # GET endpoints
         for path in ["/health", "/stats", "/metrics"]:
             r = client.get(path)
             assert r.status_code == 200, f"{path} returned {r.status_code}"
@@ -33,7 +31,6 @@ def test_no_auth_on_any_endpoint(clean_db):
         })
         assert r.status_code == 200
 
-
 def test_feedback_no_identity_verification(clean_db):
     """CONFIRMED: API trusts caller-provided user_id. No session/auth."""
     with TestClient(app) as client:
@@ -43,7 +40,6 @@ def test_feedback_no_identity_verification(clean_db):
             "event_type": "click",
         })
         assert r.status_code == 200
-
 
 def test_concurrent_feedback_no_locks(clean_db):
     """10 concurrent writes against real SQLite backend."""
@@ -62,7 +58,6 @@ def test_concurrent_feedback_no_locks(clean_db):
 
         ok = sum(1 for r in results if r.status_code == 200)
         assert ok == 10
-
 
 def test_fuzzing_malformed_inputs(clean_db):
     """Fuzzing: wrong types, missing fields, empty body, extreme lengths."""
@@ -107,7 +102,6 @@ def test_fuzzing_malformed_inputs(clean_db):
         })
         assert r.status_code == 200
 
-
 def test_mass_assignment_rejected(clean_db):
     """HARDENED: extra fields now rejected via model_config extra='forbid'."""
     with TestClient(app) as client:
@@ -121,7 +115,6 @@ def test_mass_assignment_rejected(clean_db):
             "internal_credit": 999999,
         })
         assert r.status_code == 422
-
 
 def test_unbounded_limits(clean_db):
     """HARDENED: pagination + n now capped; feedback still unlimited (needs auth/quota)."""
@@ -146,7 +139,6 @@ def test_unbounded_limits(clean_db):
         # Stats confirm unbounded growth
         stats = client.get("/stats").json()
         assert stats["feedback_count"] >= 30
-
 
 def test_n_dos_cap_boundary(clean_db):
     """ABUSE CHAIN (proven + fixed): unbounded `n` -> candidate blow-up DoS.
@@ -179,7 +171,6 @@ def test_n_dos_cap_boundary(clean_db):
         assert client.get(f"/similar/d1?n={cap + 1}").status_code == 422
         assert client.get(f"/sequential/u?n={cap + 1}").status_code == 422
         assert client.post("/search", json={"query": "x", "n": cap + 1}).status_code == 422
-
 
 def test_concurrent_read_write(clean_db):
     """Mixed concurrent reads and writes."""

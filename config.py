@@ -7,20 +7,17 @@ keep local development and the test suite working with zero setup.
 
 import os
 
-
 def _get_bool(name: str, default: bool) -> bool:
     val = os.environ.get(name)
     if val is None:
         return default
     return val.strip().lower() in ("1", "true", "yes", "on")
 
-
 def _get_int(name: str, default: int) -> int:
     try:
         return int(os.environ.get(name, default))
     except (TypeError, ValueError):
         return default
-
 
 # --- Storage paths -----------------------------------------------------------
 DATABASE_PATH = os.environ.get("DATABASE_PATH", "data/recommender.db")

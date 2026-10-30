@@ -14,7 +14,6 @@ from models.lightgcn import LightGCN
 from models.bcq import BCQQNetwork, BCQTrainer
 from models.best_rec import BESTRec, BESTRecTrainer
 
-
 class TestScoringAndContextMatch:
     def test_freshness_score(self):
         # Current year item
@@ -47,7 +46,6 @@ class TestScoringAndContextMatch:
         item_loc = {"title": "London Guide", "tags": "london,travel", "category": "articles"}
         score_loc = get_context_match_score(item_loc, device=None, location="london", time_of_day=None)
         assert score_loc == 1.0
-
 
 class TestMMRDiversityReRanking:
     def test_mmr_pure_relevance_lambda_1(self):
@@ -83,7 +81,6 @@ class TestMMRDiversityReRanking:
         assert re_ranked[0]["item_id"] == "c1"
         assert re_ranked[1]["item_id"] == "c3"
 
-
 class TestExplainers:
     def test_linear_shapley_explainer(self):
         metrics = {"relevance": 0.9, "freshness": 0.8, "fatigue": 0.1, "context": 1.0, "ssl": 0.5}
@@ -101,14 +98,12 @@ class TestExplainers:
         assert "ssl" in phi
         assert len(explanation) > 10
 
-
 class TestFairnessAndSurpriseControllers:
     def test_fairness_auditor_pid_and_di(self):
         auditor = FairnessAuditor(target_di=1.0, kp=0.5, ki=0.05, kd=0.1)
         # Empty impressions -> DI = 1.0
         assert auditor.compute_di() == 1.0
 
-        # Add 10 majority impressions (non-books)
         auditor.record_recommendations([{"category": "movies"}] * 10)
         di_low = auditor.audit_and_update_pid()
         assert di_low < 1.0
@@ -132,7 +127,6 @@ class TestFairnessAndSurpriseControllers:
         kl = controller.compute_kl_divergence(p, q)
         assert np.isclose(kl, 0.0, atol=1e-5)
 
-
 class TestBanditAndCausalEstimator:
     def test_neural_linear_bandit_selection_and_update(self, clean_db):
         bandit = NeuralLinearBandit()
@@ -142,7 +136,6 @@ class TestBanditAndCausalEstimator:
         assert 0 <= arm_id < bandit.num_actions
         assert len(weights) == 6
 
-        # Update with reward
         bandit.update(arm_id, context_vec, reward=1.0)
         assert np.any(bandit.f[arm_id] != 0.0)
 
@@ -159,7 +152,6 @@ class TestBanditAndCausalEstimator:
         # IPS weight for non-clicked item (1 / (1-p))
         weight_non_clicked = estimator.get_ips_weight(cohort="A", device="mobile", time_of_day="evening", category="movies", clicked=False)
         assert 0.1 <= weight_non_clicked <= 10.0
-
 
 class TestDeepNeuralModels:
     def test_lightgcn_forward_and_loss(self):

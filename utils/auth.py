@@ -18,7 +18,6 @@ PUBLIC_PATHS = frozenset(
     {"/health", "/docs", "/redoc", "/openapi.json", "/favicon.ico"}
 )
 
-
 class APIKeyMiddleware(BaseHTTPMiddleware):
     """Require a valid ``X-API-Key`` header when an API key is configured."""
 

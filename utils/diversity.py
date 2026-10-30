@@ -2,7 +2,6 @@ import numpy as np
 from typing import List, Dict, Any
 from embeddings.text import TextEmbedder
 
-
 def mmr_rerank(
     candidates: List[Dict[str, Any]],
     item_details_map: Dict[str, Dict[str, Any]],
@@ -30,7 +29,6 @@ def mmr_rerank(
 
     embedder = TextEmbedder()
 
-    # Get embeddings for all candidates
     item_embeddings = {}
     for c in candidates:
         iid = c["item_id"]

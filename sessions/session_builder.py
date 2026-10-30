@@ -9,7 +9,6 @@ from collections import defaultdict
 
 from data.feedback import get_all_feedback, get_user_feedback
 
-
 def build_user_sequences(
     feedback_list: list,
     max_seq_len: int = 50
@@ -40,7 +39,6 @@ def build_user_sequences(
 
     return sequences
 
-
 def build_user_sequences_with_dwell(
     feedback_list: list,
     max_seq_len: int = 50
@@ -65,7 +63,6 @@ def build_user_sequences_with_dwell(
 
     return sequences
 
-
 def get_user_sequence(user_id: str, max_len: int = 50) -> List[str]:
     """Get a single user's interaction sequence from the database.
 
@@ -83,7 +80,6 @@ def get_user_sequence(user_id: str, max_len: int = 50) -> List[str]:
     # get_user_feedback returns DESC order, reverse for chronological
     feedback.reverse()
     return [fb["item_id"] for fb in feedback]
-
 
 def build_item_id_mapping(
     items: list,

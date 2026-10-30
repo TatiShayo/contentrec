@@ -10,7 +10,6 @@ from api.items import ItemCreate
 from api.onboarding import QuizRequest, OnboardingSubmit
 from api.search import SearchRequest
 
-
 class TestPydanticSchemas:
     def test_feedback_create_valid(self):
         fb = FeedbackCreate(
@@ -119,7 +118,6 @@ class TestPydanticSchemas:
         # n > MAX_N_RECOMMENDATIONS
         with pytest.raises(ValidationError):
             SearchRequest(query="test", n=config.MAX_N_RECOMMENDATIONS + 1)
-
 
 class TestEndpointInputValidationViaHTTP:
     def test_endpoint_n_recommendations_bounds(self, clean_db):

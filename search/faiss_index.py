@@ -22,7 +22,6 @@ from embeddings.text import EMBEDDING_DIM, TextEmbedder
 DEFAULT_INDEX_PATH = os.path.join("data", "faiss.index")
 DEFAULT_MAP_PATH = os.path.join("data", "faiss_map.pkl")
 
-
 class FAISSIndex:
     """Thread-safe wrapper around a FAISS IndexHNSWFlat inner-product index.
 
@@ -49,9 +48,7 @@ class FAISSIndex:
         self._embedder = TextEmbedder()
         self._next_id = 0
 
-    # ------------------------------------------------------------------
     # Index building
-    # ------------------------------------------------------------------
 
     def build_index(self, items: List[dict]) -> None:
         """Embed all items and rebuild the index from scratch.
@@ -99,7 +96,7 @@ class FAISSIndex:
                 fused = np.zeros(self.dimension, dtype=np.float32)
                 fused[0] = 1.0
             fused_embeddings.append(fused)
-            
+
         embeddings = np.array(fused_embeddings, dtype=np.float32)
 
         with self._lock:
@@ -107,7 +104,7 @@ class FAISSIndex:
             sub_index.hnsw.efConstruction = 200
             sub_index.hnsw.efSearch = 64
             self.index = faiss.IndexIDMap2(sub_index)
-            
+
             self._id_to_row = {}
             self._row_to_id = {}
             ids = []
@@ -115,14 +112,12 @@ class FAISSIndex:
                 self._id_to_row[iid] = idx
                 self._row_to_id[idx] = iid
                 ids.append(idx)
-                
+
             self._next_id = len(item_ids)
             ids_arr = np.array(ids, dtype=np.int64)
             self.index.add_with_ids(embeddings.astype(np.float32), ids_arr)
 
-    # ------------------------------------------------------------------
     # Searching
-    # ------------------------------------------------------------------
 
     def search(self, query_embedding: np.ndarray, n: int = 10) -> List[dict]:
         """Search for the *n* nearest items by cosine similarity.
@@ -142,7 +137,6 @@ class FAISSIndex:
         if query_arr.size == 0:
             return []
 
-        # Validate dimensions
         if query_arr.ndim == 1 and query_arr.shape[0] != self.dimension:
             raise ValueError(f"Query embedding dimension mismatch: expected {self.dimension}, got {query_arr.shape[0]}")
         elif query_arr.ndim > 1 and query_arr.shape[-1] != self.dimension:
@@ -164,7 +158,7 @@ class FAISSIndex:
                 query = np.zeros(self.dimension, dtype=np.float32)
                 query[0] = 1.0
             query = query.reshape(1, -1).astype(np.float32)
-            
+
             k = min(n * 2, self.index.ntotal)
             distances, indices = self.index.search(query, k)
 
@@ -196,9 +190,7 @@ class FAISSIndex:
         embedding = self._embedder.encode(query)
         return self.search(embedding, n=n)
 
-    # ------------------------------------------------------------------
     # Incremental updates
-    # ------------------------------------------------------------------
 
     def add_item(self, item: dict) -> None:
         """Add or update a single item in the existing index.
@@ -210,14 +202,14 @@ class FAISSIndex:
         vision_embedder = VisionEmbedder()
         t_emb = self._embedder.embed_item(item)
         v_emb = vision_embedder.embed_item_image(item)
-        
+
         lambda_t = 0.7
         lambda_v = 0.3
         fused = lambda_t * t_emb + lambda_v * v_emb
-        
+
         if np.isnan(fused).any() or np.isinf(fused).any():
             fused = np.nan_to_num(fused, nan=0.0, posinf=0.0, neginf=0.0)
-            
+
         # Normalize vector to unit length
         norm = float(np.linalg.norm(fused))
         if norm > 0.0:
@@ -240,16 +232,14 @@ class FAISSIndex:
             else:
                 int_id = self._next_id
                 self._next_id += 1
-                
+
             self._id_to_row[item_id] = int_id
             self._row_to_id[int_id] = item_id
-            
+
             ids_arr = np.array([int_id], dtype=np.int64)
             self.index.add_with_ids(embedding.reshape(1, -1).astype(np.float32), ids_arr)
 
-    # ------------------------------------------------------------------
     # Persistence
-    # ------------------------------------------------------------------
 
     def save(self, path: Optional[str] = None) -> None:
         """Persist the FAISS index and the id mapping to disk.
@@ -278,7 +268,6 @@ class FAISSIndex:
                     },
                     f,
                 )
-            # Remove any stale legacy pickle so loads prefer the JSON map.
             if os.path.exists(legacy_pkl_path):
                 try:
                     os.remove(legacy_pkl_path)

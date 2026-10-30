@@ -54,7 +54,6 @@ from models.best_rec import BESTRec, BESTRecTrainer
 from utils.surprise import SurpriseController
 from data.database import add_impression
 
-
 def get_freshness_score(item) -> float:
     metadata = item.get("metadata") or {}
     year = metadata.get("published_year") or metadata.get("year")
@@ -66,40 +65,38 @@ def get_freshness_score(item) -> float:
             pass
     return 0.5
 
-
 def get_context_match_score(item, device, location, time_of_day) -> float:
     score = 0.0
     tags = (item.get("tags") or "").lower()
     category = (item.get("category") or "").lower()
-    
+
     if device:
         device = device.lower()
         if device == "mobile" and ("short" in tags or "quick" in tags):
             score += 0.5
         elif device == "desktop" and ("detailed" in tags or "deep" in tags):
             score += 0.5
-            
+
     if time_of_day:
         time_of_day = time_of_day.lower()
         if time_of_day in ["evening", "night"] and category in ["movies", "entertainment"]:
             score += 0.5
         elif time_of_day in ["morning", "afternoon"] and category in ["articles", "news", "education", "books"]:
             score += 0.5
-            
+
     if location:
         location = location.lower()
         if location in tags or location in category:
             score += 1.0
-            
-    return min(1.0, score)
 
+    return min(1.0, score)
 
 class RecommendationEngine:
     def __init__(self):
         self.model_path = config.MODEL_PATH
         self.cold_start_threshold = config.COLD_START_THRESHOLD
         self._lock = threading.Lock()
-        
+
         # Collaborative Filtering (LightFM)
         if LIGHTFM_AVAILABLE:
             self.model = LightFM(loss='warp')
@@ -107,15 +104,15 @@ class RecommendationEngine:
         else:
             self.model = None
             self.dataset = None
-            
+
         self.user_id_map = {}
         self.item_id_map = {}
         self.item_features = None
         self.interactions = None
-        
+
         # Semantic Search (FAISS)
         self.faiss_index = None
-        
+
         # Sequential Model (SASRec)
         self.seq_model = None
         self.seq_item_to_idx = {}
@@ -154,7 +151,6 @@ class RecommendationEngine:
         self.best_rec_model = None
         self.best_rec_trainer = None
 
-        # Load models on startup
         self._load_model()
         self._load_faiss_index()
         self._load_sequential_model()
@@ -166,7 +162,7 @@ class RecommendationEngine:
         self.seq_online_trainer = None
         self.seq_online_stop_event = threading.Event()
         self.seq_online_thread = None
-        
+
         if SASREC_AVAILABLE and self.seq_model is not None:
             from models.sequential_train import OnlineSequentialTrainer, run_online_sequential_learning
             import copy
@@ -203,7 +199,7 @@ class RecommendationEngine:
         """Save collaborative filtering model."""
         if not LIGHTFM_AVAILABLE:
             return
-            
+
         os.makedirs(os.path.dirname(self.model_path), exist_ok=True)
         with open(self.model_path, 'wb') as f:
             state = {
@@ -307,7 +303,6 @@ class RecommendationEngine:
 
     def _get_context_vector(self, user_id, device, time_of_day) -> np.ndarray:
         """Construct a 73-dimensional context vector for the Neural Linear Bandit."""
-        # 1. GCN user embedding (64)
         gcn_emb = np.zeros(64, dtype=np.float32)
         if (self.lightgcn_trainer is not None and 
             self.lightgcn_user_emb is not None and 
@@ -315,7 +310,6 @@ class RecommendationEngine:
             idx = self.lightgcn_trainer.user_to_idx[user_id]
             gcn_emb = self.lightgcn_user_emb[idx]
 
-        # 2. Time of day one-hot (4)
         tod_vec = np.zeros(4, dtype=np.float32)
         tod = (time_of_day or "").lower()
         if tod == "morning":
@@ -327,7 +321,6 @@ class RecommendationEngine:
         elif tod == "night":
             tod_vec[3] = 1.0
 
-        # 3. Device one-hot (3)
         dev_vec = np.zeros(3, dtype=np.float32)
         dev = (device or "").lower()
         if dev == "mobile":
@@ -337,7 +330,6 @@ class RecommendationEngine:
         elif dev == "tablet":
             dev_vec[2] = 1.0
 
-        # 4. History size (1)
         fb_count = 0.0
         try:
             from data.feedback import get_user_feedback
@@ -345,7 +337,6 @@ class RecommendationEngine:
         except:
             pass
 
-        # 5. Historical CTR (1)
         ctr = 0.0
         with self.metrics._lock:
             user_served = sum(1 for k, v in self.metrics.served_recs.items() if k[0] == user_id)
@@ -358,7 +349,6 @@ class RecommendationEngine:
         """Construct a 390-dimensional state vector for the BCQ Q-network."""
         user_history_items = [f["item_id"] for f in user_feedback[-10:]]
 
-        # 1. Mean SBERT embedding (384)
         state_emb = np.zeros(384, dtype=np.float32)
         if user_history_items and self.faiss_index is not None:
             try:
@@ -373,7 +363,6 @@ class RecommendationEngine:
             except:
                 pass
 
-        # 2. Fatigue counts (5)
         categories = ["movies", "music", "books", "articles", "news"]
         category_counts = {}
         for iid in user_history_items:
@@ -390,7 +379,6 @@ class RecommendationEngine:
         for cat_idx, cat_name in enumerate(categories):
             fatigue_vec[cat_idx] = float(category_counts.get(cat_name, 0))
 
-        # 3. Session step (1)
         step_idx = np.array([float(len(user_history_items))], dtype=np.float32)
 
         return np.concatenate([state_emb, fatigue_vec, step_idx])
@@ -406,11 +394,11 @@ class RecommendationEngine:
             else:
                 u_idx = self.lightgcn_trainer.user_to_idx[user_id]
                 u_vector = self.lightgcn_user_emb[u_idx]
-            
+
             # Compute dot product scores against all item embeddings
             scores = np.dot(self.lightgcn_item_emb, u_vector)
             top_indices = np.argsort(-scores)[:n]
-            
+
             recs = []
             for rank, idx in enumerate(top_indices):
                 item_id = self.lightgcn_trainer.idx_to_item.get(idx)
@@ -433,22 +421,21 @@ class RecommendationEngine:
         try:
             from data.feedback import get_all_feedback
             from sessions.session_builder import build_user_sequences_with_dwell, build_item_id_mapping
-            
+
             feedback = get_all_feedback()
             items = get_all_items()
-            
+
             if not feedback or not items:
                 logging.info("Insufficient data to train sequential model.")
                 return
-                
+
             # Build item mappings
             self.seq_item_to_idx, self.seq_idx_to_item = build_item_id_mapping(items)
             num_items = len(self.seq_item_to_idx) + 1  # 0 is padding
-            
+
             # Build user sequences with dwell times
             sequences = build_user_sequences_with_dwell(feedback, max_seq_len=50)
-            
-            # Initialize SASRec model
+
             self.seq_model = SASRec(
                 num_items=num_items,
                 hidden_dim=64,
@@ -457,12 +444,11 @@ class RecommendationEngine:
                 num_blocks=2,
                 dropout=0.2
             )
-            
+
             trainer = SequentialTrainer(self.seq_model, lr=1e-3, device='cpu', propensity_estimator=self.propensity_estimator)
             logging.info("Training SASRec sequential model...")
             trainer.train(sequences, self.seq_item_to_idx, epochs=10, batch_size=32)
-            
-            # Save model and mappings
+
             trainer.save_model(config.SASREC_MODEL_PATH)
             with open(config.SASREC_MAP_PATH, 'wb') as f:
                 pickle.dump({
@@ -482,18 +468,16 @@ class RecommendationEngine:
 
             # Clear cache upon model retraining
             self.cache.clear()
-            
+
             # Refresh fairness catalogue counts
             self.fairness_auditor.refresh_catalog_counts()
 
-            # 0. Causal Propensity Model
             try:
                 logging.info("Training Propensity Estimator...")
                 self.propensity_estimator.train_model()
             except Exception as e:
                 logging.error(f"Error training propensity model: {e}")
-            
-            # 1. Collaborative Filtering (LightFM)
+
             if LIGHTFM_AVAILABLE:
                 try:
                     feedback = get_all_feedback()
@@ -543,15 +527,12 @@ class RecommendationEngine:
             else:
                 logging.info("LightFM not available, skipping collaborative filtering training.")
 
-            # 2. Semantic Search (FAISS)
             if FAISS_AVAILABLE:
                 self.rebuild_faiss_index()
 
-            # 3. Sequential Model (SASRec)
             if SASREC_AVAILABLE:
                 self.train_sequential_model()
 
-            # 4. Graph Collaborative Filtering (LightGCN)
             try:
                 from models.lightgcn import LightGCNTrainer
                 trainer = LightGCNTrainer(emb_dim=64, epochs=20)
@@ -570,7 +551,6 @@ class RecommendationEngine:
             except Exception as e:
                 logging.error(f"Error training LightGCN: {e}")
 
-            # 5. Reinforcement Learning (BCQ Q-Network)
             try:
                 feedback = get_all_feedback()
                 items = get_all_items()
@@ -582,7 +562,6 @@ class RecommendationEngine:
             except Exception as e:
                 logging.error(f"Error training BCQ: {e}")
 
-            # 6. Self-Supervised Universal User Representations (BEST-Rec)
             try:
                 from models.best_rec import BESTRec, BESTRecTrainer
                 from sessions.session_builder import build_user_sequences_with_dwell
@@ -592,10 +571,10 @@ class RecommendationEngine:
                     logging.info("Training BEST-Rec model...")
                     item_ids = sorted([i['item_id'] for i in items])
                     item_to_idx = {iid: idx for idx, iid in enumerate(item_ids)}
-                    
+
                     categories_list = ["movies", "music", "books", "articles", "news"]
                     cat_to_idx = {cat: idx for idx, cat in enumerate(categories_list)}
-                    
+
                     item_to_cat_idx = {}
                     for item in items:
                         iid = item["item_id"]
@@ -603,7 +582,7 @@ class RecommendationEngine:
                         cat_idx = cat_to_idx.get(cat, 0)
                         if iid in item_to_idx:
                             item_to_cat_idx[item_to_idx[iid]] = cat_idx
-                            
+
                     sequences_dict = build_user_sequences_with_dwell(feedback, max_seq_len=30)
                     seq_list = []
                     for uid, events in sequences_dict.items():
@@ -615,11 +594,11 @@ class RecommendationEngine:
                             seq_indices = [item_to_idx[iid] for iid in events if iid in item_to_idx]
                         if len(seq_indices) >= 2:
                             seq_list.append(seq_indices)
-                            
+
                     num_items = len(item_to_idx) + 1
                     self.best_rec_model = BESTRec(num_items=num_items)
                     self.best_rec_trainer = BESTRecTrainer(self.best_rec_model)
-                    
+
                     self.best_rec_trainer.train_epoch(seq_list, item_to_cat_idx)
                     self.best_rec_trainer.save("data/best_rec.pth")
                     logging.info("BEST-Rec model trained and saved successfully.")
@@ -632,7 +611,7 @@ class RecommendationEngine:
             # Invalidate cached items for users receiving new feedback
             for fb in new_feedback:
                 self.cache.invalidate_user(fb['user_id'])
-                
+
             if not LIGHTFM_AVAILABLE:
                 return
 
@@ -655,12 +634,12 @@ class RecommendationEngine:
             sequence = get_user_sequence(user_id, max_len=50)
             if not sequence:
                 return []
-            
+
             idx_seq = [self.seq_item_to_idx.get(iid, 0) for iid in sequence]
             idx_seq = [i for i in idx_seq if i != 0]
             if not idx_seq:
                 return []
-                
+
             top_indices = self.seq_model.predict_next(idx_seq, n=n)
             recs = []
             for rank, idx in enumerate(top_indices):
@@ -686,16 +665,16 @@ class RecommendationEngine:
             sequence = get_user_sequence(user_id, max_len=5)
             if not sequence:
                 return []
-            
+
             last_item_id = sequence[-1]
             from data.items import get_item
             item_details = get_item(last_item_id)
             if not item_details:
                 return []
-                
+
             embedding = self.faiss_index._embedder.embed_item(item_details)
             raw_recs = self.faiss_index.search(embedding, n=n + 1)
-            
+
             recs = []
             for r in raw_recs:
                 if r['item_id'] != last_item_id:
@@ -716,13 +695,13 @@ class RecommendationEngine:
         rrf_scores = {}
         explanations = {}
         sources = {}
-        
+
         def add_to_rrf(recs, weight=1.0):
             for rank, rec in enumerate(recs):
                 item_id = rec['item_id']
                 score = weight / (k + rank)
                 rrf_scores[item_id] = rrf_scores.get(item_id, 0.0) + score
-                
+
                 # Keep explanation from the source with highest confidence score
                 current_weight = explanations.get(item_id, {}).get("weight", 0.0)
                 if weight > current_weight:
@@ -731,7 +710,7 @@ class RecommendationEngine:
                         "weight": weight
                     }
                     sources[item_id] = rec.get("source", "")
-                
+
         if seq_recs:
             add_to_rrf(seq_recs, weight=1.5)
         if gcn_recs:
@@ -740,12 +719,12 @@ class RecommendationEngine:
             add_to_rrf(cf_recs, weight=1.0)
         if content_recs:
             add_to_rrf(content_recs, weight=0.8)
-            
+
         sorted_items = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
-        
+
         if not sorted_items:
             return []
-            
+
         max_score = sorted_items[0][1]
         blended = []
         for item_id, score in sorted_items[:n]:
@@ -763,11 +742,9 @@ class RecommendationEngine:
         """Get blended or sequential recommendations according to A/B test cohort routing, with support for filtering, context, multi-objective linear fusion, and query steering."""
         start_time = time.time()
         import json
-        
-        # 1. Construct context vector for Neural Linear Bandit
+
         context_vector = self._get_context_vector(user_id, context_device, context_time)
-        
-        # 2. Select weights via Bandit or use custom overrides
+
         is_custom_weights = any(w is not None for w in [w_relevance, w_freshness, w_fatigue, w_context, w_ssl])
         if not is_custom_weights:
             arm_id, (w_rel, w_fresh, w_fatigue, w_context, w_rl, w_ssl_val) = self.bandit.select_action(context_vector)
@@ -782,13 +759,11 @@ class RecommendationEngine:
             w_ssl = w_ssl if w_ssl is not None else 0.15 # default SSL weight fallback
 
         with self._lock:
-            # 3. Deterministic cohort routing
             cohort = ABTestManager.get_cohort(user_id)
             self.metrics.record_recommendation_served(cohort)
-            
+
             cand_limit = max(n * 3, 50)
 
-            # Get user's recent feedback
             user_feedback = []
             try:
                 from data.feedback import get_user_feedback
@@ -796,7 +771,6 @@ class RecommendationEngine:
             except:
                 pass
 
-            # Parse query negations
             if query:
                 import re
                 q_lower = query.lower()
@@ -815,7 +789,7 @@ class RecommendationEngine:
             if query and FAISS_AVAILABLE and self.faiss_index is not None:
                 try:
                     e_query = self.faiss_index._embedder.encode(query)
-                    
+
                     e_history = np.zeros(384, dtype=np.float32)
                     history_count = 0
                     if user_feedback:
@@ -826,7 +800,7 @@ class RecommendationEngine:
                             if item:
                                 e_history += self.faiss_index._embedder.embed_item(item)
                                 history_count += 1
-                                
+
                     if history_count > 0:
                         e_history = e_history / history_count
                         norm = np.linalg.norm(e_history)
@@ -834,13 +808,13 @@ class RecommendationEngine:
                             e_history = e_history / norm
                     else:
                         e_history = e_query.copy()
-                        
+
                     alpha = 0.5
                     e_final = alpha * e_history + (1 - alpha) * e_query
                     norm = np.linalg.norm(e_final)
                     if norm > 0:
                         e_final = e_final / norm
-                        
+
                     raw_recs = self.faiss_index.search(e_final, n=cand_limit)
                     for r in raw_recs:
                         content_recs.append({
@@ -854,7 +828,7 @@ class RecommendationEngine:
                     content_recs = self.get_content_similarity_recs(user_id, n=cand_limit)
             else:
                 content_recs = self.get_content_similarity_recs(user_id, n=cand_limit)
-            
+
             if cohort == "B":
                 # Cohort B (Treatment): Sequential-Heavy. Try SASRec first (with dwell-time blended inside), fallback to FAISS similarity.
                 seq_recs = self.get_sequential_recs(user_id, n=cand_limit)
@@ -880,7 +854,7 @@ class RecommendationEngine:
                         )
                         top_items_idx = np.argsort(-scores)[:cand_limit]
                         inv_item_map = {v: k for k, v in self.item_id_map.items()}
-                        
+
                         # Tag profiles for explanations
                         user_tags = set()
                         for f in user_feedback:
@@ -891,7 +865,7 @@ class RecommendationEngine:
                         for idx in top_items_idx:
                             item_id = inv_item_map[idx]
                             item_details_f = get_items_by_ids([item_id]).get(item_id)
-                            
+
                             explanation = "Recommended based on similar users' preferences."
                             if item_details_f and item_details_f.get('tags') and user_tags:
                                 overlap = {t.strip() for t in item_details_f['tags'].split(',')} & user_tags
@@ -908,7 +882,7 @@ class RecommendationEngine:
                         logging.error(f"Error predicting with LightFM: {e}")
 
                 candidates = self._blend_recommendations(cf_recs, seq_recs, content_recs, n=cand_limit, gcn_recs=gcn_recs)
-            
+
             # Cold-start fallback (e.g. user has absolutely no history)
             if not candidates:
                 candidates = self.cold_start_recommend(tags_or_category=features, n=cand_limit)
@@ -951,7 +925,7 @@ class RecommendationEngine:
 
             user_interacted_items = [f["item_id"] for f in user_feedback]
             user_item_details = get_items_by_ids(user_interacted_items) if user_interacted_items else {}
-            
+
             category_counts = {}
             for f in user_feedback:
                 iid = f["item_id"]
@@ -973,7 +947,7 @@ class RecommendationEngine:
                     history_indices = [self.seq_item_to_idx.get(iid, 0) for iid in history_iids if iid in self.seq_item_to_idx]
                     pad_len = max(0, 30 - len(history_indices))
                     padded = [0] * pad_len + history_indices[-30:]
-                    
+
                     input_tensor = torch.tensor([padded], dtype=torch.long)
                     self.best_rec_model.eval()
                     with torch.no_grad():
@@ -987,15 +961,15 @@ class RecommendationEngine:
             for c in candidates:
                 item_id = c["item_id"]
                 item = item_details.get(item_id) or {}
-                
+
                 relevance = c.get("score") or 0.0
                 freshness = get_freshness_score(item)
-                
+
                 cat = (item.get("category") or "").lower()
                 fatigue = (category_counts.get(cat, 0) / max_count) if (category_counts and max_count > 0) else 0.0
-                
+
                 context_match = get_context_match_score(item, context_device, context_location, context_time)
-                
+
                 # Compute BCQ RL Long-Term Q-value
                 q_val = 0.0
                 if self.bcq_model is not None and self.faiss_index is not None:
@@ -1024,7 +998,7 @@ class RecommendationEngine:
 
                 # Final linear fusion score including BCQ RL bonus and BEST-Rec similarity
                 final_score = (relevance * w_rel) + (freshness * w_fresh) - (fatigue * w_fatigue) + (context_match * w_context) + (q_val * w_rl) + (ssl_score * w_ssl)
-                
+
                 c_copy = c.copy()
                 c_copy["score"] = round(final_score, 4)
                 c_copy["metrics"] = {
@@ -1035,7 +1009,7 @@ class RecommendationEngine:
                     "ssl": float(ssl_score)
                 }
                 re_ranked_candidates.append(c_copy)
-                
+
             # Apply Fairness Auditor PID adjustments on scored candidates
             self.fairness_auditor.audit_and_update_pid()
             for c in re_ranked_candidates:
@@ -1057,7 +1031,7 @@ class RecommendationEngine:
 
             # Sort by new multi-objective score
             candidates = sorted(re_ranked_candidates, key=lambda x: x["score"], reverse=True)
-                
+
             # MMR diversity re-ranking
             if adjusted_diversity < 1.0 and candidates:
                 final_recs = mmr_rerank(candidates, item_details, n=n, diversity_lambda=adjusted_diversity)
@@ -1097,7 +1071,7 @@ class RecommendationEngine:
                         user_history_indices = [self.seq_item_to_idx.get(iid, 0) for iid in user_history if iid in self.seq_item_to_idx]
                         user_history_indices = [idx for idx in user_history_indices if idx != 0]
                         target_item_idx = self.seq_item_to_idx.get(r["item_id"], 0)
-                        
+
                         explanation = SASRecLimeExplainer.explain_sequence(
                             model=self.seq_model,
                             user_history_indices=user_history_indices,
@@ -1120,8 +1094,7 @@ class RecommendationEngine:
                         r["explanation"] = explanation
                     except Exception as e:
                         logging.error(f"Error computing Shapley explanation: {e}")
-                
-                # Delete auxiliary metrics dict to keep output clean
+
                 r.pop("metrics", None)
 
             # Record recommended items details for rolling DI calculation
@@ -1147,9 +1120,8 @@ class RecommendationEngine:
 
             # Record latency
             self.metrics.record_latency("recommend", time.time() - start_time)
-            
-            return final_recs
 
+            return final_recs
 
     def similar_items(self, item_id, n=5, exclude_categories=None, exclude_items=None):
         """Find items similar to a given item, with exclusion filters."""
@@ -1171,7 +1143,7 @@ class RecommendationEngine:
 
         with self._lock:
             candidates = []
-            
+
             # Try FAISS content similarity first
             if FAISS_AVAILABLE and self.faiss_index is not None:
                 try:
@@ -1236,7 +1208,7 @@ class RecommendationEngine:
                 filtered_recs.append(c)
                 if len(filtered_recs) >= n:
                     break
-            
+
             return filtered_recs
 
     def cold_start_recommend(self, tags_or_category=None, n=10):
@@ -1261,16 +1233,16 @@ class RecommendationEngine:
                 tags = [t.strip() for t in tags_or_category.split(',')]
             else:
                 tags = tags_or_category
-                
+
             for tag in tags:
                 items.extend(search_by_tags(tag))
-        
+
         if not items:
             feedback = get_all_feedback()
             item_counts = {}
             for f in feedback:
                 item_counts[f['item_id']] = item_counts.get(f['item_id'], 0) + 1
-            
+
             sorted_items = sorted(item_counts.items(), key=lambda x: x[1], reverse=True)
             if sorted_items:
                 return [{
@@ -1279,7 +1251,7 @@ class RecommendationEngine:
                     "source": "popularity",
                     "explanation": "Trending among all users."
                 } for i in sorted_items[:n]]
-                
+
             all_catalog_items = get_all_items()
             if all_catalog_items:
                 return [{
@@ -1289,7 +1261,7 @@ class RecommendationEngine:
                     "explanation": "Discover items from our catalog."
                 } for item in all_catalog_items[:n]]
             return []
-            
+
         seen = set()
         unique_items = []
         for item in items:
@@ -1301,5 +1273,5 @@ class RecommendationEngine:
                     "explanation": f"Matches your interest in tag '{item.get('tags', '')}'."
                 })
                 seen.add(item['item_id'])
-                
+
         return unique_items[:n]

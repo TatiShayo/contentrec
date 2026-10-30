@@ -18,11 +18,7 @@ from sessions.session_builder import (
 from models.sasrec import SASRec
 from models.sequential_train import SequentialTrainer
 
-
-# ---------------------------------------------------------------------------
 # Session Builder Tests
-# ---------------------------------------------------------------------------
-
 
 class TestBuildUserSequences:
     """Tests for build_user_sequences()."""
@@ -55,7 +51,6 @@ class TestBuildUserSequences:
         seqs = build_user_sequences([])
         assert seqs == {}
 
-
 class TestBuildItemIdMapping:
     """Tests for build_item_id_mapping()."""
 
@@ -82,7 +77,6 @@ class TestBuildItemIdMapping:
         assert 0 in idx_to_item
         assert idx_to_item[0] == "<PAD>"
 
-
 class TestGetUserSequence:
     """Tests for get_user_sequence() with real DB."""
 
@@ -102,11 +96,7 @@ class TestGetUserSequence:
         seq = get_user_sequence("nonexistent_user")
         assert seq == []
 
-
-# ---------------------------------------------------------------------------
 # SASRec Model Tests
-# ---------------------------------------------------------------------------
-
 
 class TestSASRecModel:
     """Tests for the SASRec model architecture."""
@@ -173,11 +163,7 @@ class TestSASRecModel:
         assert mask[0, 0].item() is False
         assert mask[0, 1].item() is True
 
-
-# ---------------------------------------------------------------------------
 # Sequential Trainer Tests
-# ---------------------------------------------------------------------------
-
 
 class TestSequentialTrainer:
     """Tests for the SequentialTrainer class."""
@@ -262,7 +248,6 @@ class TestSequentialTrainer:
             assert loaded_model is not None
             assert loaded_model.num_items == trainer.model.num_items
 
-
             # Both models should produce the same output for the same input
             test_seq = [1, 2, 3]
             orig_preds = trainer.model.predict_next(test_seq, n=5)
@@ -272,11 +257,7 @@ class TestSequentialTrainer:
             if os.path.exists(path):
                 os.remove(path)
 
-
-# ---------------------------------------------------------------------------
 # Sequential API Tests
-# ---------------------------------------------------------------------------
-
 
 class TestSequentialAPI:
     """Tests for the /sequential/{user_id} API endpoint."""
@@ -292,14 +273,12 @@ class TestSequentialAPI:
         test_app = FastAPI()
         test_app.include_router(router)
 
-        # Create a mock engine with default empty attributes
         mock_engine = MagicMock()
         mock_engine.seq_model = None
         mock_engine.seq_item_to_idx = None
         mock_engine.seq_idx_to_item = None
         mock_engine.cache.get.return_value = None
         test_app.state.engine = mock_engine
-
 
         with TestClient(test_app) as c:
             yield c
@@ -325,7 +304,6 @@ class TestSequentialAPI:
         from data.feedback import add_feedback
         from data.items import add_item
 
-        # Add items and feedback
         for i in range(10):
             add_item(f"item_{i}", f"Title {i}", f"tag{i}", "cat")
         for i in range(8):

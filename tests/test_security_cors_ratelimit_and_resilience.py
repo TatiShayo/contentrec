@@ -8,12 +8,11 @@ import config
 from utils.rate_limiter import RateLimiter
 from utils.cache import RecommendationCache
 
-
 class TestCORSAndHeaders:
     def test_cors_preflight_and_wildcard_handling(self):
         from fastapi import FastAPI
         from fastapi.middleware.cors import CORSMiddleware
-        
+
         # Verify CORS enforcement when allowed origins are configured
         cors_app = FastAPI()
         cors_app.add_middleware(
@@ -26,9 +25,8 @@ class TestCORSAndHeaders:
         @cors_app.get("/test")
         def route():
             return {"status": "ok"}
-            
+
         with TestClient(cors_app) as client:
-            # 1. Allowed origin OPTIONS preflight
             res_allowed = client.options(
                 "/test",
                 headers={
@@ -38,8 +36,7 @@ class TestCORSAndHeaders:
             )
             assert res_allowed.status_code == 200
             assert res_allowed.headers.get("access-control-allow-origin") == "https://allowed.example.com"
-            
-            # 2. Disallowed origin OPTIONS preflight
+
             res_disallowed = client.options(
                 "/test",
                 headers={
@@ -48,7 +45,6 @@ class TestCORSAndHeaders:
                 }
             )
             assert res_disallowed.status_code == 400
-
 
 class TestRateLimiterCore:
     def test_rate_limiter_allows_under_limit(self):
@@ -80,9 +76,7 @@ class TestRateLimiterCore:
         time.sleep(1.1)
         # Trigger cleanup by calling is_allowed
         limiter.is_allowed("trigger_ip")
-        # Ensure stale IPs don't blow up memory indefinitely
         assert len(limiter._requests) >= 1
-
 
 class TestAPIKeyAuthentication:
     def test_api_key_when_configured(self, monkeypatch):
@@ -106,7 +100,6 @@ class TestAPIKeyAuthentication:
             # Protected endpoint with valid key -> 200
             r_valid = client.get("/stats", headers={"x-api-key": "super_secret_production_token"})
             assert r_valid.status_code == 200
-
 
 class TestErrorHandlingAndResilience:
     def test_missing_item_returns_404(self, clean_db):

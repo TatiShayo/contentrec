@@ -7,7 +7,6 @@ import torch.nn as nn
 import numpy as np
 from typing import Dict, List, Tuple
 
-
 class SequentialTrainer:
     """Trains the SASRec sequential recommendation model."""
 
@@ -34,7 +33,6 @@ class SequentialTrainer:
             if not events:
                 continue
 
-            # Handle both list of dicts (with dwell_time) and list of string item IDs
             if isinstance(events[0], dict):
                 idx_seq = [item_to_idx.get(e['item_id'], 0) for e in events]
                 dwell_seq = [e.get('dwell_time', 0.0) for e in events]
@@ -133,7 +131,7 @@ class SequentialTrainer:
             except Exception as e:
                 import logging
                 logging.error(f"Error loading user contexts for online training: {e}")
-                
+
         # Build idx_to_item and items_map for category lookup
         idx_to_item = {v: k for k, v in item_to_idx.items()}
         from data.items import get_all_items
@@ -165,7 +163,7 @@ class SequentialTrainer:
                 # Reshape for cross entropy: (batch*seq_len, num_items) vs (batch*seq_len,)
                 logits_flat = logits.view(-1, logits.size(-1))
                 tgt_flat = tgt_batch.view(-1)
-                
+
                 loss_item_raw = self.criterion(logits_flat, tgt_flat)
 
                 # Apply propensity sample weights if available
@@ -174,16 +172,16 @@ class SequentialTrainer:
                     for b_idx in range(len(batch_uids)):
                         uid = batch_uids[b_idx]
                         cohort, device, time_of_day = user_contexts.get(uid, ("A", "desktop", "afternoon"))
-                        
+
                         tgt_indices = targets[batch_idx[b_idx]]
                         last_tgt_idx = int(tgt_indices[-1])
                         tgt_iid = idx_to_item.get(last_tgt_idx)
                         item = items_map.get(tgt_iid) if tgt_iid else None
                         cat = item.get("category", "") if item else ""
-                        
+
                         weight = self.propensity_estimator.get_ips_weight(cohort, device, time_of_day, cat)
                         sample_weights.extend([weight] * len(tgt_indices))
-                        
+
                     weight_tensor = torch.tensor(sample_weights, dtype=torch.float32).to(self.device)
                     mask_flat = (tgt_flat > 0).float()
                     loss_item = (loss_item_raw * weight_tensor * mask_flat).sum() / (mask_flat.sum() + 1e-10)
@@ -194,11 +192,11 @@ class SequentialTrainer:
                 # Gather predictions for the target items to compute Log-Normal NLL loss
                 mu_t = torch.gather(mu, dim=2, index=tgt_batch.unsqueeze(-1)).squeeze(-1)
                 sigma_t = torch.gather(sigma, dim=2, index=tgt_batch.unsqueeze(-1)).squeeze(-1)
-                
+
                 # Mask out padding targets
                 mask = (tgt_batch > 0).float()
                 log_y = torch.log(dwell_batch + 1.0)
-                
+
                 # Dwell loss step
                 loss_dwell_step = log_y + torch.log(sigma_t) + ((log_y - mu_t) ** 2) / (2.0 * (sigma_t ** 2))
                 loss_dwell = (loss_dwell_step * mask).sum() / (mask.sum() + 1e-10)
@@ -253,7 +251,6 @@ class SequentialTrainer:
         model.eval()
         return model, checkpoint
 
-
 import queue
 import copy
 import threading
@@ -270,11 +267,11 @@ class OnlineSequentialTrainer:
         self.replay_buffer = []
         self.max_buffer_size = max_buffer_size
         self._lock = threading.Lock()
-        
+
     def add_sample(self, seq_indices: List[int], next_idx: int, dwell_time: float):
         """Add a single training sample (sequence, next item, dwell time) to the queue."""
         self.queue.put((seq_indices, next_idx, dwell_time))
-        
+
     def process_queue_and_step(self) -> float:
         """Drains the queue, adds to replay buffer, and performs a single SGD step."""
         samples_added = 0
@@ -289,27 +286,27 @@ class OnlineSequentialTrainer:
                 inp = seq_indices[-max_len:]
                 pad_len = max_len - len(inp)
                 inp_padded = [0] * pad_len + inp
-                
+
                 # target is same shifted by 1, with next_idx at the end
                 tgt_padded = inp_padded[1:] + [next_idx]
                 dwell_padded = [0.0] * (max_len - 1) + [dwell_time]
-                
+
                 self.replay_buffer.append((inp_padded, tgt_padded, dwell_padded))
                 samples_added += 1
             except queue.Empty:
                 break
-                
+
         # Cap replay buffer
         if len(self.replay_buffer) > self.max_buffer_size:
             self.replay_buffer = self.replay_buffer[-self.max_buffer_size:]
-            
+
         if not self.replay_buffer:
             return 0.0
-            
+
         # Draw a batch
         batch_size = min(32, len(self.replay_buffer))
         indices = np.random.choice(len(self.replay_buffer), batch_size, replace=False)
-        
+
         batch_inputs = []
         batch_targets = []
         batch_dwells = []
@@ -318,21 +315,21 @@ class OnlineSequentialTrainer:
             batch_inputs.append(inp)
             batch_targets.append(tgt)
             batch_dwells.append(dwell)
-            
+
         self.model_train.train()
         self.optimizer.zero_grad()
-        
+
         inp_tensor = torch.LongTensor(batch_inputs).to(self.device)
         tgt_tensor = torch.LongTensor(batch_targets).to(self.device)
         dwell_tensor = torch.FloatTensor(batch_dwells).to(self.device)
-        
+
         logits, mu, sigma = self.model_train(inp_tensor, return_dwell=True)
-        
+
         # Cross entropy loss
         logits_flat = logits.view(-1, logits.size(-1))
         tgt_flat = tgt_tensor.view(-1)
         loss_item = self.criterion(logits_flat, tgt_flat)
-        
+
         # Dwell loss
         mu_t = torch.gather(mu, dim=2, index=tgt_tensor.unsqueeze(-1)).squeeze(-1)
         sigma_t = torch.gather(sigma, dim=2, index=tgt_tensor.unsqueeze(-1)).squeeze(-1)
@@ -340,22 +337,21 @@ class OnlineSequentialTrainer:
         log_y = torch.log(dwell_tensor + 1.0)
         loss_dwell_step = log_y + torch.log(sigma_t) + ((log_y - mu_t) ** 2) / (2.0 * (sigma_t ** 2))
         loss_dwell = (loss_dwell_step * mask).sum() / (mask.sum() + 1e-10)
-        
+
         # EWC / Multi-task loss using homoscedastic uncertainty log-variances
         loss = (torch.exp(-self.model_train.log_var_item) * loss_item + 
                 torch.exp(-self.model_train.log_var_dwell) * loss_dwell + 
                 self.model_train.log_var_item + self.model_train.log_var_dwell)
-                
+
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.model_train.parameters(), 5.0)
         self.optimizer.step()
-        
+
         # Atomic weight swap to serve model copy
         with self.model_serve._lock:
             self.model_serve.load_state_dict(copy.deepcopy(self.model_train.state_dict()))
-            
-        return float(loss.item())
 
+        return float(loss.item())
 
 def run_online_sequential_learning(trainer: OnlineSequentialTrainer, stop_event: threading.Event):
     """Background thread loop that executes online SGD steps periodically."""
@@ -370,4 +366,3 @@ def run_online_sequential_learning(trainer: OnlineSequentialTrainer, stop_event:
             logging.error(f"Error in online learning step: {e}")
         time.sleep(10.0) # check and update every 10 seconds
     logging.info("Online sequential learning thread stopped.")
-

@@ -14,13 +14,10 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-# ---------------------------------------------------------------------------
 # Mock sentence-transformers *before* importing our modules so that
 # tests pass on CI / environments where the package is not installed.
-# ---------------------------------------------------------------------------
 
 _MOCK_DIM = 384
-
 
 def _make_mock_model():
     """Return a mock SentenceTransformer whose encode() returns random vectors."""
@@ -42,11 +39,9 @@ def _make_mock_model():
     model.encode = _encode
     return model
 
-
 # Patch at module level so every TextEmbedder instance uses the mock.
 _mock_st_module = MagicMock()
 _mock_st_module.SentenceTransformer = _make_mock_model
-
 
 @pytest.fixture(autouse=True)
 def _patch_sentence_transformers():
@@ -68,11 +63,7 @@ def _patch_sentence_transformers():
         with TextEmbedder._instance_lock:
             TextEmbedder._instance = None
 
-
-# ===================================================================
 # TextEmbedder tests
-# ===================================================================
-
 
 class TestTextEmbedder:
     """Tests for embeddings.text.TextEmbedder."""
@@ -147,11 +138,7 @@ class TestTextEmbedder:
         assert not errors
         assert len(results) == 8
 
-
-# ===================================================================
 # FAISSIndex tests
-# ===================================================================
-
 
 class TestFAISSIndex:
     """Tests for search.faiss_index.FAISSIndex."""
@@ -260,11 +247,7 @@ class TestFAISSIndex:
 
         assert not errors
 
-
-# ===================================================================
 # Search API tests
-# ===================================================================
-
 
 class TestSearchAPI:
     """Tests for api.search endpoints."""
@@ -279,7 +262,6 @@ class TestSearchAPI:
         app = FastAPI()
         app.include_router(router)
 
-        # Create a mock FAISS index
         mock_index = MagicMock()
         mock_index.search_by_text.return_value = [
             {"item_id": "x1", "score": 0.95},

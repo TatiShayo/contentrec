@@ -18,9 +18,7 @@ Usage:
 import random
 import sys
 
-# ---------------------------------------------------------------------------
 # Demo Items: 50+ items across 5 categories
-# ---------------------------------------------------------------------------
 
 ITEMS = [
     # ── Movies (12) ──────────────────────────────────────────────────────
@@ -88,9 +86,7 @@ ITEMS = [
     {"item_id": "article_010", "title": "Remote Work Best Practices in 2026", "tags": "productivity,remote-work,career,tips", "category": "articles"},
 ]
 
-# ---------------------------------------------------------------------------
 # Demo Users with personality-driven preferences
-# ---------------------------------------------------------------------------
 
 EVENT_TYPES = ["view", "like", "purchase", "watch", "click"]
 
@@ -158,7 +154,6 @@ USER_PROFILES = [
     },
 ]
 
-
 def _score_item(item: dict, profile: dict) -> float:
     """Score an item for a user profile based on category and tag overlap."""
     score = 0.0
@@ -168,7 +163,6 @@ def _score_item(item: dict, profile: dict) -> float:
     overlap = item_tags & set(profile["preferred_tags"])
     score += len(overlap) * 2.0
     return score
-
 
 def _generate_feedback(seed: int = 42) -> list[dict]:
     """Generate realistic feedback events for all user profiles.
@@ -182,7 +176,6 @@ def _generate_feedback(seed: int = 42) -> list[dict]:
     for profile in USER_PROFILES:
         # Score every item for this user
         scored = [(item, _score_item(item, profile)) for item in ITEMS]
-        # Add a small random jitter so we get variety
         weights = [max(s + rng.uniform(0, 1), 0.1) for _, s in scored]
         items_only = [item for item, _ in scored]
 
@@ -206,10 +199,7 @@ def _generate_feedback(seed: int = 42) -> list[dict]:
 
     return feedback_events
 
-
-# ---------------------------------------------------------------------------
 # Seed via API (httpx → running server)
-# ---------------------------------------------------------------------------
 
 def seed_via_api(base_url: str = "http://localhost:8000") -> None:
     """Seed the database by POSTing to the running API server.
@@ -253,10 +243,7 @@ def seed_via_api(base_url: str = "http://localhost:8000") -> None:
 
     print("\n✅  Seeding complete!")
 
-
-# ---------------------------------------------------------------------------
 # Seed directly into SQLite (no server required)
-# ---------------------------------------------------------------------------
 
 def seed_directly() -> None:
     """Seed the database by writing directly to SQLite.
@@ -321,10 +308,7 @@ def seed_directly() -> None:
     print(f"   feedback: {feedback_count}")
     print("\n✅  Seeding complete!")
 
-
-# ---------------------------------------------------------------------------
 # Entry point
-# ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
     if "--direct" in sys.argv:

@@ -1,6 +1,5 @@
 import hashlib
 
-
 class ABTestManager:
     """Manages deterministic user cohort allocation and algorithm assignment."""
 

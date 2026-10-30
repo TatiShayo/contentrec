@@ -15,7 +15,6 @@ from embeddings.text import TextEmbedder, EMBEDDING_DIM
 from embeddings.vision import VisionEmbedder
 from search.faiss_index import FAISSIndex
 
-
 class TestVectorMathAndEmbeddings:
     def test_text_embedder_singleton(self):
         e1 = TextEmbedder()
@@ -86,7 +85,6 @@ class TestVectorMathAndEmbeddings:
         emb1 = vision.embed_item_image(item)
         emb2 = vision.embed_item_image(item)
         np.testing.assert_array_almost_equal(emb1, emb2)
-
 
 class TestFAISSIndexCore:
     def test_faiss_init_empty(self):
@@ -183,7 +181,6 @@ class TestFAISSIndexCore:
         assert len(res) == 1
         assert res[0]["item_id"] == "up_1"
 
-        # Update same item ID with new content
         item1_updated = {"item_id": "up_1", "title": "Updated Title History", "tags": "history"}
         idx.add_item(item1_updated)
         assert idx.index.ntotal >= 1
@@ -206,7 +203,6 @@ class TestFAISSIndexCore:
         json_map = str(tmp_path / "test_faiss_map.json")
         assert os.path.exists(json_map)
 
-        # Load into new index instance
         loaded_idx = FAISSIndex()
         loaded_idx.load(idx_path)
         assert loaded_idx.index.ntotal == 2
